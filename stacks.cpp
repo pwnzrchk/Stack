@@ -51,5 +51,5 @@ int main(void) {
     StackPush(&stk1, 83);
     StackPush(&stk1, 72);
 
-    
+
 }
