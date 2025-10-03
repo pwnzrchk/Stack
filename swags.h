@@ -25,11 +25,11 @@ typedef struct swag_t {
     int* data;
 }swag_t;
 
-typedef int swagType;
+typedef int swagElem_t;
 
 swagErr_t SwagInit(swag_t* refSwag, size_t cpcty);
-swagErr_t SwagPush(swag_t* refSwag, swagType val);
-swagErr_t SwagPop(swag_t* refSwag, swagType* popped);
+swagErr_t SwagPush(swag_t* refSwag, swagElem_t val);
+swagErr_t SwagPop(swag_t* refSwag, swagElem_t* popped);
 swagErr_t SwagVerify(swag_t* refSwag);
 swagErr_t SwagDestroy(swag_t* refSwag);
 void SwagDump(swag_t* refSwag, swagErr_t mistake);
