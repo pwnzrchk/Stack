@@ -63,14 +63,15 @@ swagErr_t SwagPush(swag_t* refSwag, swagElem_t val) {
     if (SwagVerify(refSwag) != NOERRS)
         return SwagVerify(refSwag);
 
-    static int over = 0;
+
     if (refSwag -> size < refSwag -> capacity) {
         refSwag -> data[(refSwag -> size++) + 1] = val;
         return SwagVerify(refSwag);
     }
 
+    static int over = 0;
     refSwag -> capacity *= 2;
-    swagElem_t* temp = (swagElem_t*)realloc(refSwag -> data, 2*(refSwag -> capacity) + 2);
+    swagElem_t* temp = (swagElem_t*)realloc(refSwag -> data, (2*(refSwag -> capacity) + 2) * sizeof(swagElem_t));
     if (temp == NULL) {
         fprintf(stderr, "Realloc error\n");
         return REALLOCERR;
@@ -78,11 +79,11 @@ swagErr_t SwagPush(swag_t* refSwag, swagElem_t val) {
 
     refSwag -> data = temp;
     for (int i = 0; i < refSwag -> capacity - (refSwag -> size); i++) {
-        refSwag -> data[(refSwag -> size) + i] = SWAGVIPERR;
+        refSwag -> data[(refSwag -> size) + i + 1] = SWAGVIPERR;
     }
     refSwag -> data[0] = FIRSTVIPERR;
-    refSwag -> data[refSwag -> capacity + 1] = SECONDVIPERR;
-    fprintf(stderr, "перегруз свэга бозо №%d\n", ++over);
+    refSwag -> data[(refSwag -> capacity) + 1] = SECONDVIPERR;
+    fprintf(stderr, "Swag overflow No%d\n", ++over);
     refSwag -> data[(refSwag -> size++) + 1] = val;
     return SwagVerify(refSwag);
 }
@@ -120,14 +121,14 @@ if (refSwag == NULL)
     return;
 printf("Swag size: %lu\n", refSwag -> size);
 printf("Swag capacity: %lu\n", refSwag -> capacity);
-printf("\nAddres FIRST_VIPERR: %p \t Addres SECOND_VIPERR: %p\n\n", refSwag -> data, refSwag -> data + (refSwag -> capacity + 1));
+printf("\nAddres FIRST_VIPERR: %p \t Addres SECOND_VIPERR: %p\n", refSwag -> data, refSwag -> data + (refSwag -> capacity + 1));
 if(refSwag -> data == NULL)
     return;
 printf("FIRST_VIPERR: %d \t SECOND_VIPERR: %d\n\n", refSwag -> data[0], refSwag -> data[refSwag -> capacity + 1]);
 printf("Cells of the swag:\n");
 
 if (mistake != DATANULLPTR) {
-    for (int i = 0; i < refSwag->capacity - 1; i++) {
+    for (int i = 0; i < refSwag->capacity; i++) {
         printf("%10d ", refSwag->data[1 + i]);
         if ((i + 1) % 3 == 0) {
             printf("\n");

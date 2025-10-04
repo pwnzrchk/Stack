@@ -6,16 +6,13 @@
 #include "swags.h"
 
 
-
-
-
 void initialization(swag_t* refSwag) {
 
     size_t enteredSize = 0;
     swagErr_t errorInit = NOERRS;
     printf("HOLA!\nEnter capacity of your stack\n");
     if (scanf("%zd", &enteredSize) != 1) {
-        printf("Wrong input\n");
+        fprintf(stderr, "Wrong input\n");
         return;
     } else {
         char ch = getchar();
@@ -29,6 +26,9 @@ void initialization(swag_t* refSwag) {
     }
     SwagInit(refSwag, enteredSize);
 }
+
+
+
 
 void mainCommands(swag_t* refSwag) {
     bool FlagOfExit = false;
@@ -59,13 +59,12 @@ void mainCommands(swag_t* refSwag) {
         }
 
 
-
         switch(command) {
             case 1:
                 if ((error = SwagPush(refSwag, value)) != NOERRS) {
                     SwagDump(refSwag, error);
                 } else {
-                printf("\nPushed %d\n\n", value);
+                printf("Pushed %d\n\n", value);
                 }
             break;
 
@@ -89,7 +88,7 @@ void mainCommands(swag_t* refSwag) {
                 if ((error = SwagSub(refSwag)) != NOERRS) {
                     printf("Please be carefully, SUB err\n");
                 } else {
-                    printf("\nAdded\n\n");
+                    printf("\nSubtracted\n\n");
                 }
                 break;
 
