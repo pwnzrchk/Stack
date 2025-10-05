@@ -15,9 +15,19 @@ typedef struct{
     char** pointerBuffer;
  }fileInfo;
 
+enum transErr_t {
+    NOTRANSERR = 10,
+    OPENFILEERR = 11,
+    NULLTRANS = 12,
+    FREADERR = 13,
+    CALLOCERR = 14,
+    SIZEERR = 15
+};
+
+
 long long FileSize(FILE* refFile);
-void Plenumation(fileInfo* refFileArch);
-void Distributor(fileInfo* refFileArch);
-void ByteCoder(fileInfo* refFileInf, fileInfo* byteCodeFileInf);
+transErr_t Plenumation(fileInfo* refFileArch);
+transErr_t Distributor(fileInfo* refFileArch);
+transErr_t ByteCoder(fileInfo* refFileInf, fileInfo* byteCodeFileInf);
 
 #endif //translator_h

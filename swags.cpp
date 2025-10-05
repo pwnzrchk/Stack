@@ -55,7 +55,7 @@ swagErr_t SwagInit(swag_t* refSwag, size_t cpcty) {
     refSwag -> capacity = cpcty;
     refSwag -> data = (swagElem_t*)calloc(cpcty + 2, sizeof(swagElem_t));
     refSwag -> size = 0;
-    for (int i = 0; (size_t)i < cpcty; i++) {
+    for (size_t i = 0; (size_t)i < cpcty; i++) {
         refSwag -> data[(refSwag -> size) + (size_t)i + 1] = SWAGVIPERR;
     }
     refSwag -> data[0] = FIRSTVIPERR;
@@ -76,7 +76,7 @@ swagErr_t SwagPush(swag_t* refSwag, swagElem_t val) {
 
     static int over = 0;
     refSwag -> capacity *= 2;
-    swagElem_t* temp = (swagElem_t*)realloc(refSwag -> data, (2*(refSwag -> capacity) + 2) * sizeof(swagElem_t));
+    swagElem_t* temp = (swagElem_t*)realloc(refSwag -> data, (refSwag -> capacity + 2) * sizeof(swagElem_t));
     if (temp == NULL) {
         fprintf(stderr, "Realloc error\n");
         return REALLOCERR;
@@ -113,8 +113,8 @@ swagErr_t SwagDestroy(swag_t* refSwag) {
     }
     free(refSwag -> data);
     refSwag -> data = NULL;
-    refSwag -> capacity = SWAGVIPERR;
-    refSwag -> size = SWAGVIPERR;
+    refSwag -> capacity = 0;
+    refSwag -> size = 0;
     return NOERRS;
 }
 

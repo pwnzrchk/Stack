@@ -4,6 +4,17 @@
 #include "countSymb.H"
 #include "swags.h"
 
+
+
+enum transErr_t {
+    NOTRANSERR = 10,
+    OPENFILEERR = 11,
+    NULLTRANS = 12,
+    FREADERR = 13,
+    CALLOCERR = 14,
+    SIZEERR = 15
+};
+
 typedef struct{
     const char* file_name;
     size_t str_count;
@@ -21,13 +32,18 @@ long long FileSize(FILE* refFile) {
 
 
 
-void Plenumation(fileInfo* refFileArch) {
+transErr_t Plenumation(fileInfo* refFileArch) {
     FILE* file = fopen(refFileArch -> file_name, "r");
+    if (!file) {
+        fprintf(stderr, "Open file ERR in plenumation, in file %s\n", refFileArch -> file_name);
+        return OPENFILEERR;
+    }
     refFileArch -> file_size = FileSize(file);
     refFileArch -> buffer = (char*)calloc((size_t)((refFileArch -> file_size) + 1), sizeof(char));
 
     if (refFileArch -> buffer == NULL) {
         fprintf(stderr, "Calloc error for text_buffer\n");
+        return NULLTRANS;
     }
     if (refFileArch -> buffer != NULL) {
         refFileArch -> buffer[(refFileArch -> file_size)] = '\0';
@@ -35,19 +51,22 @@ void Plenumation(fileInfo* refFileArch) {
 
     if ((long long)fread(refFileArch -> buffer, sizeof(char), (size_t)refFileArch -> file_size, file) != refFileArch -> file_size) {
         printf("Read file error\n");                //FIXME - пересмотри типы при работе с big data
+        return FREADERR;
     }
     refFileArch -> str_count = (size_t)countSymb(refFileArch -> buffer, '\n', (size_t)refFileArch -> file_size) + 1;
     fclose(file);                                   //FIXME - тоже самое        FIXME
+    return NOTRANSERR;
  }
 
 
 
-void Distributor(fileInfo* refFileArch) {
-    if (refFileArch -> str_count == 0) return;
-    refFileArch -> pointerBuffer = (char**)calloc(refFileArch -> str_count, sizeof(char*));
+transErr_t Distributor(fileInfo* refFileArch) {
+    if (refFileArch -> str_count == 0) return SIZEERR;
+    refFileArch -> pointerBuffer = (char**)calloc(refFileArch -> str_count , sizeof(char*));
     if (!(refFileArch -> pointerBuffer)) {
         fprintf(stderr, "Calloc error for ptr_buffer\n");
-        return;
+        free(refFileArch -> pointerBuffer);
+        return CALLOCERR;
     }
 
     size_t stringsAmount = 0;
@@ -60,20 +79,20 @@ void Distributor(fileInfo* refFileArch) {
                 break; //что делать с ошибкой?
         }
     }
-    return;
+    return NOTRANSERR;
 }
 
 
 
-void ByteCoder(fileInfo* refFileInf, fileInfo* byteCodeFileInf) {
-    if (!refFileInf || !byteCodeFileInf) return;
+transErr_t ByteCoder(fileInfo* refFileInf, fileInfo* byteCodeFileInf) {
+    if (!refFileInf || !byteCodeFileInf) return NULLTRANS;
     char arrForWord[99];
     int argument = SWAGVIPERR;
 
     FILE* fileByteCode = fopen(byteCodeFileInf -> file_name, "w");
     if (!fileByteCode) {
         fprintf(stderr, "File open error - byteCode\n");
-        return;
+        return OPENFILEERR;
     }
     byteCodeFileInf -> str_count = refFileInf -> str_count;
 
@@ -85,7 +104,7 @@ void ByteCoder(fileInfo* refFileInf, fileInfo* byteCodeFileInf) {
         if (!workline) break;
 
         short scanned = 0;
-            if ((scanned = (short)sscanf(workline, "%s %d", arrForWord, &argument)) <= 0) {
+            if ((scanned = (short)sscanf(workline, "%98s %d", arrForWord, &argument)) <= 0) {
                 fprintf(stderr, "Error scanf ASM file\nString No %zu\n", k);
                 break;
             }
@@ -119,4 +138,5 @@ void ByteCoder(fileInfo* refFileInf, fileInfo* byteCodeFileInf) {
             }
         }
         fclose(fileByteCode);
+    return NOTRANSERR;
 }

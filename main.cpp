@@ -17,8 +17,8 @@ int main(void) {
     Distributor(&mainFile);
     ByteCoder(&mainFile, &byteCodeFile);
     Proccesing(&byteCodeFile, &swag0);
-
-    SwagDump(&swag0, NOERRS);
+    swagElem_t argum = 183;
+    printf("Last: %d\n", SwagPop(&swag0, &argum));
     return 0;
 }
 

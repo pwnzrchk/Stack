@@ -13,6 +13,7 @@ enum ProcErr_t {
 };
 
 
+
 ProcErr_t Proccesing(fileInfo* BCFile, swag_t* refSwag);
 
 #endif //proccesor_h
