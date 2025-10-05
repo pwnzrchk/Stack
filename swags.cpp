@@ -6,13 +6,7 @@
 #define SWAGVIPERR 8008135
 #define FIRSTVIPERR 13
 #define SECONDVIPERR 9
-typedef int swagElem_t;
 
-typedef struct swag_t {
-    size_t size;
-    size_t capacity;
-    int* data;
-}swag_t;
 
 enum swagErr_t {
     NOERRS = 0,
@@ -23,13 +17,24 @@ enum swagErr_t {
     DIEDBIRDS = 5,
     REALLOCERR = 6,
     NULLDIVISION = 7
-
 };
+
+typedef int swagElem_t;
+
+typedef struct swag_t {
+    size_t size;
+    size_t capacity;
+    int* data;
+}swag_t;
+
+
+
+
 
 swagErr_t SwagVerify(swag_t* refSwag) {
     if (refSwag == NULL || refSwag -> data == NULL)
         return DATANULLPTR;
-    if (refSwag -> size < 0 || refSwag -> capacity <= 0)
+    if (refSwag -> capacity == 0)
         return INCORRECTSIZE;
     if (refSwag -> size > refSwag -> capacity)
         return SWAGOVERFLOW;
@@ -50,8 +55,8 @@ swagErr_t SwagInit(swag_t* refSwag, size_t cpcty) {
     refSwag -> capacity = cpcty;
     refSwag -> data = (swagElem_t*)calloc(cpcty + 2, sizeof(swagElem_t));
     refSwag -> size = 0;
-    for (int i = 0; i < cpcty; i++) {
-        refSwag -> data[(refSwag -> size) + i + 1] = SWAGVIPERR;
+    for (int i = 0; (size_t)i < cpcty; i++) {
+        refSwag -> data[(refSwag -> size) + (size_t)i + 1] = SWAGVIPERR;
     }
     refSwag -> data[0] = FIRSTVIPERR;
     refSwag -> data[cpcty + 1] = SECONDVIPERR;
@@ -78,8 +83,8 @@ swagErr_t SwagPush(swag_t* refSwag, swagElem_t val) {
     }
 
     refSwag -> data = temp;
-    for (int i = 0; i < refSwag -> capacity - (refSwag -> size); i++) {
-        refSwag -> data[(refSwag -> size) + i + 1] = SWAGVIPERR;
+    for (size_t i = 0; i < refSwag -> capacity - (refSwag -> size); i++) {
+        refSwag -> data[(refSwag -> size) + (size_t)i + 1] = SWAGVIPERR;
     }
     refSwag -> data[0] = FIRSTVIPERR;
     refSwag -> data[(refSwag -> capacity) + 1] = SECONDVIPERR;
@@ -128,7 +133,7 @@ printf("FIRST_VIPERR: %d \t SECOND_VIPERR: %d\n\n", refSwag -> data[0], refSwag 
 printf("Cells of the swag:\n");
 
 if (mistake != DATANULLPTR) {
-    for (int i = 0; i < refSwag->capacity; i++) {
+    for (size_t i = 0; i < refSwag->capacity; i++) {
         printf("%10d ", refSwag->data[1 + i]);
         if ((i + 1) % 3 == 0) {
             printf("\n");

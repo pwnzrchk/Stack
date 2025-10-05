@@ -15,7 +15,9 @@ enum swagErr_t {
     INCORRECTSIZE = 2,
     FULLSWAG = 3,
     SWAGOVERFLOW = 4,
-    DIEDBIRDS = 5
+    DIEDBIRDS = 5,
+    REALLOCERR = 6,
+    NULLDIVISION = 7
 
 };
 

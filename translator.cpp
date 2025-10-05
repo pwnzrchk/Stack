@@ -45,7 +45,7 @@ void Plenumation(fileInfo* refFileArch) {
 void Distributor(fileInfo* refFileArch) {
     if (refFileArch -> str_count == 0) return;
     refFileArch -> pointerBuffer = (char**)calloc(refFileArch -> str_count, sizeof(char*));
-    if (refFileArch -> pointerBuffer == NULL) {
+    if (!(refFileArch -> pointerBuffer)) {
         fprintf(stderr, "Calloc error for ptr_buffer\n");
         return;
     }
@@ -65,7 +65,7 @@ void Distributor(fileInfo* refFileArch) {
 
 
 
-void ByteCoder(const fileInfo* refFileInf, fileInfo* byteCodeFileInf) {
+void ByteCoder(fileInfo* refFileInf, fileInfo* byteCodeFileInf) {
     if (!refFileInf || !byteCodeFileInf) return;
     char arrForWord[99];
     int argument = SWAGVIPERR;
@@ -95,7 +95,8 @@ void ByteCoder(const fileInfo* refFileInf, fileInfo* byteCodeFileInf) {
                 if (scanned == 2) {
                     fprintf(fileByteCode, "1 %d\n", argument);
             } else {
-                    fprintf(stderr, "No argument for PUSH in string No%zu\n", k);
+                    fprintf(stderr, "No argument for PUSH in string No%zu\n", k + 1);
+                    break; //FIXME бля что делать с ошибками
             }
             } else if (strncmp(arrForWord, "POP", 3) == 0) {
                 fprintf(fileByteCode, "2\n");
@@ -119,58 +120,3 @@ void ByteCoder(const fileInfo* refFileInf, fileInfo* byteCodeFileInf) {
         }
         fclose(fileByteCode);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- int main(void) {
-
-    fileInfo mainFile = {"ASSCode.asm", 0, 0, NULL};
-    fileInfo byteCodeFile = {"byteCode.txt", 0, 0, NULL};
-    Plenumation(&mainFile);
-    Distributor(&mainFile);
-    ByteCoder(&mainFile, &byteCodeFile);
-    return 0;
-
-
- }
-
-

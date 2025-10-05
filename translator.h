@@ -18,6 +18,6 @@ typedef struct{
 long long FileSize(FILE* refFile);
 void Plenumation(fileInfo* refFileArch);
 void Distributor(fileInfo* refFileArch);
-void ByteCoder(const fileInfo* refFileInf, const fileInfo* byteCodeFileInf);
+void ByteCoder(fileInfo* refFileInf, fileInfo* byteCodeFileInf);
 
 #endif //translator_h
