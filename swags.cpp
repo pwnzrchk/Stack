@@ -2,55 +2,30 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-#define SWAGVIPERR 8008135
-#define FIRSTVIPERR 13
-#define SECONDVIPERR 9
-
-
-enum swagErr_t {
-    NOERRS = 0,
-    DATANULLPTR = 1,
-    INCORRECTSIZE = 2,
-    FULLSWAG = 3,
-    SWAGOVERFLOW = 4,
-    DIEDBIRDS = 5,
-    REALLOCERR = 6,
-    NULLDIVISION = 7
-};
-
-typedef int swagElem_t;
-
-typedef struct swag_t {
-    size_t size;
-    size_t capacity;
-    int* data;
-}swag_t;
-
-
+#include "swags.h"
 
 
 
 swagErr_t SwagVerify(swag_t* refSwag) {
     if (refSwag == NULL || refSwag -> data == NULL)
-        return DATANULLPTR;
+        return DATA_NULL_PTR;
     if (refSwag -> capacity == 0)
-        return INCORRECTSIZE;
+        return INCORRECT_SIZE;
     if (refSwag -> size > refSwag -> capacity)
-        return SWAGOVERFLOW;
+        return SWAG_OVERFLOW;
     if (refSwag -> data[0] != FIRSTVIPERR || refSwag -> data[refSwag -> capacity + 1] != SECONDVIPERR)
-        return DIEDBIRDS;
-    return NOERRS;
+        return DIED_BIRDS;
+    return NO_ERRS;
 }
 
 
 swagErr_t SwagInit(swag_t* refSwag, size_t cpcty) {
 
     if(refSwag == NULL)
-        return DATANULLPTR;
+        return DATA_NULL_PTR;
 
     if(cpcty <= 0)
-        return INCORRECTSIZE;
+        return INCORRECT_SIZE;
 
     refSwag -> capacity = cpcty;
     refSwag -> data = (swagElem_t*)calloc(cpcty + 2, sizeof(swagElem_t));
@@ -65,7 +40,7 @@ swagErr_t SwagInit(swag_t* refSwag, size_t cpcty) {
 
 swagErr_t SwagPush(swag_t* refSwag, swagElem_t val) {
 
-    if (SwagVerify(refSwag) != NOERRS)
+    if (SwagVerify(refSwag) != NO_ERRS)
         return SwagVerify(refSwag);
 
 
@@ -79,7 +54,7 @@ swagErr_t SwagPush(swag_t* refSwag, swagElem_t val) {
     swagElem_t* temp = (swagElem_t*)realloc(refSwag -> data, (refSwag -> capacity + 2) * sizeof(swagElem_t));
     if (temp == NULL) {
         fprintf(stderr, "Realloc error\n");
-        return REALLOCERR;
+        return REALLOC_ERR;
     }
 
     refSwag -> data = temp;
@@ -95,11 +70,11 @@ swagErr_t SwagPush(swag_t* refSwag, swagElem_t val) {
 
 
 swagErr_t SwagPop(swag_t* refSwag, swagElem_t* popped) {
-    if (SwagVerify(refSwag) != NOERRS) {
+    if (SwagVerify(refSwag) != NO_ERRS) {
         return SwagVerify(refSwag);
     }
     if (refSwag -> size == 0) {
-        return INCORRECTSIZE;
+        return INCORRECT_SIZE;
     }
     *popped = refSwag -> data[(refSwag -> size)--];
     refSwag -> data[(refSwag -> size) + 1] = SWAGVIPERR;
@@ -108,62 +83,62 @@ swagErr_t SwagPop(swag_t* refSwag, swagElem_t* popped) {
 
 
 swagErr_t SwagDestroy(swag_t* refSwag) {
-    if (SwagVerify(refSwag) != NOERRS) {
+    if (SwagVerify(refSwag) != NO_ERRS) {
         return SwagVerify(refSwag);
     }
     free(refSwag -> data);
     refSwag -> data = NULL;
     refSwag -> capacity = 0;
     refSwag -> size = 0;
-    return NOERRS;
+    return NO_ERRS;
 }
 
 
 void SwagDump(swag_t* refSwag, swagErr_t mistake) {
-printf("\n\n----------------S.W.A.G.G.A----------------\n\n");
-printf("Swag pointer: %p\n", refSwag);
-if (refSwag == NULL)
-    return;
-printf("Swag size: %lu\n", refSwag -> size);
-printf("Swag capacity: %lu\n", refSwag -> capacity);
-printf("\nAddres FIRST_VIPERR: %p \t Addres SECOND_VIPERR: %p\n", refSwag -> data, refSwag -> data + (refSwag -> capacity + 1));
-if(refSwag -> data == NULL)
-    return;
-printf("FIRST_VIPERR: %d \t SECOND_VIPERR: %d\n\n", refSwag -> data[0], refSwag -> data[refSwag -> capacity + 1]);
-printf("Cells of the swag:\n");
+    printf("\n\n----------------S.W.A.G.G.A----------------\n\n");
+    printf("Swag pointer: %p\n", refSwag);
+    if (refSwag == NULL)
+        return;
+    printf("Swag size: %lu\n", refSwag -> size);
+    printf("Swag capacity: %lu\n", refSwag -> capacity);
+    printf("\nAddres FIRST_VIPERR: %p \t Addres SECOND_VIPERR: %p\n", refSwag -> data, refSwag -> data + (refSwag -> capacity + 1));
+    if(refSwag -> data == NULL)
+        return;
+    printf("FIRST_VIPERR: %zu \t SECOND_VIPERR: %zu\n\n", refSwag -> data[0], refSwag -> data[refSwag -> capacity + 1]);
+    printf("Cells of the swag:\n");
 
-if (mistake != DATANULLPTR) {
-    for (size_t i = 0; i < refSwag->capacity; i++) {
-        printf("%10d ", refSwag->data[1 + i]);
-        if ((i + 1) % 3 == 0) {
-            printf("\n");
+    if (mistake != DATA_NULL_PTR) {
+        for (size_t i = 0; i < refSwag->capacity; i++) {
+            printf("%10zu ", refSwag->data[1 + i]);
+            if ((i + 1) % 3 == 0) {
+                printf("\n");
+            }
         }
     }
-}
 
-if (mistake != NOERRS) {
-    printf("\n\nErrorNo: %d", mistake);
-}
+    if (mistake != NO_ERRS) {
+        printf("\n\nErrorNo: %d", mistake);
+    }
 
-printf("\n\n----------------S.W.A.G.G.A----------------\n\n");
+    printf("\n\n----------------S.W.A.G.G.A----------------\n\n");
 }
 
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
 swagErr_t SwagSumn(swag_t* refSwag) {
     swagElem_t arg1, arg2 = SWAGVIPERR;
-    swagErr_t error, errorFirst, errorSecond = NOERRS;
-    if ((error = SwagVerify(refSwag)) != NOERRS) {
+    swagErr_t error, errorFirst, errorSecond = NO_ERRS;
+    if ((error = SwagVerify(refSwag)) != NO_ERRS) {
         SwagDump(refSwag, error);
         return error;
     }
 
-    if (((errorFirst = SwagPop(refSwag, &arg1)) != NOERRS) || ((errorSecond = SwagPop(refSwag, &arg2)) != NOERRS)) {
-        error = (errorFirst != NOERRS ? errorFirst : errorSecond);
+    if (((errorFirst = SwagPop(refSwag, &arg1)) != NO_ERRS) || ((errorSecond = SwagPop(refSwag, &arg2)) != NO_ERRS)) {
+        error = (errorFirst != NO_ERRS ? errorFirst : errorSecond);
         SwagDump(refSwag, error);
         return error;
     }
-    if ((error = SwagPush(refSwag, arg1 + arg2)) != NOERRS) {
+    if ((error = SwagPush(refSwag, arg1 + arg2)) != NO_ERRS) {
         SwagDump(refSwag, error);
         return error;
     }
@@ -173,18 +148,18 @@ swagErr_t SwagSumn(swag_t* refSwag) {
 
 swagErr_t SwagSub(swag_t* refSwag) {
     swagElem_t arg1, arg2 = SWAGVIPERR;
-    swagErr_t error, errorFirst, errorSecond = NOERRS;
-    if ((error = SwagVerify(refSwag)) != NOERRS) {
+    swagErr_t error, errorFirst, errorSecond = NO_ERRS;
+    if ((error = SwagVerify(refSwag)) != NO_ERRS) {
         SwagDump(refSwag, error);
         return error;
     }
 
-    if ((errorFirst = SwagPop(refSwag, &arg1)) != NOERRS || ((errorSecond = SwagPop(refSwag, &arg2)) != NOERRS)) {
-        error = (errorFirst != NOERRS ? errorFirst : errorSecond);
+    if ((errorFirst = SwagPop(refSwag, &arg1)) != NO_ERRS || ((errorSecond = SwagPop(refSwag, &arg2)) != NO_ERRS)) {
+        error = (errorFirst != NO_ERRS ? errorFirst : errorSecond);
         SwagDump(refSwag, error);
         return error;
     }
-    if ((error = SwagPush(refSwag, arg1 - arg2)) != NOERRS) {
+    if ((error = SwagPush(refSwag, arg1 - arg2)) != NO_ERRS) {
         SwagDump(refSwag, error);
         return error;
     }
@@ -194,18 +169,18 @@ swagErr_t SwagSub(swag_t* refSwag) {
 
 swagErr_t SwagMul(swag_t* refSwag) {
     swagElem_t arg1, arg2 = SWAGVIPERR;
-    swagErr_t error, errorFirst, errorSecond = NOERRS;
-    if ((error = SwagVerify(refSwag)) != NOERRS) {
+    swagErr_t error, errorFirst, errorSecond = NO_ERRS;
+    if ((error = SwagVerify(refSwag)) != NO_ERRS) {
         SwagDump(refSwag, error);
         return error;
     }
 
-    if ((errorFirst = SwagPop(refSwag, &arg1)) != NOERRS || ((errorSecond = SwagPop(refSwag, &arg2)) != NOERRS)) {
-        error = (errorFirst != NOERRS ? errorFirst : errorSecond);
+    if ((errorFirst = SwagPop(refSwag, &arg1)) != NO_ERRS || ((errorSecond = SwagPop(refSwag, &arg2)) != NO_ERRS)) {
+        error = (errorFirst != NO_ERRS ? errorFirst : errorSecond);
         SwagDump(refSwag, error);
         return error;
     }
-    if ((error = SwagPush(refSwag, arg1 * arg2)) != NOERRS) {
+    if ((error = SwagPush(refSwag, arg1 * arg2)) != NO_ERRS) {
         SwagDump(refSwag, error);
         return error;
     }
@@ -215,18 +190,18 @@ swagErr_t SwagMul(swag_t* refSwag) {
 
 swagErr_t SwagDiv(swag_t* refSwag) {
     swagElem_t arg1, arg2 = SWAGVIPERR;
-    swagErr_t error, errorFirst, errorSecond = NOERRS;
-    if ((error = SwagVerify(refSwag)) != NOERRS) {
+    swagErr_t error, errorFirst, errorSecond = NO_ERRS;
+    if ((error = SwagVerify(refSwag)) != NO_ERRS) {
         SwagDump(refSwag, error);
         return error;
     }
 
-    if ((errorFirst = SwagPop(refSwag, &arg1)) != NOERRS || ((errorSecond = SwagPop(refSwag, &arg2)) != NOERRS) || arg2 == 0) {
-        error = (errorFirst != NOERRS) ? errorFirst : (errorSecond != NOERRS) ? errorSecond : NULLDIVISION;
+    if ((errorFirst = SwagPop(refSwag, &arg1)) != NO_ERRS || ((errorSecond = SwagPop(refSwag, &arg2)) != NO_ERRS) || arg2 == 0) {
+        error = (errorFirst != NO_ERRS) ? errorFirst : (errorSecond != NO_ERRS) ? errorSecond : NULL_DIVISION;
         SwagDump(refSwag, error);
         return error;
     }
-    if ((error = SwagPush(refSwag, arg1 / arg2)) != NOERRS ) {
+    if ((error = SwagPush(refSwag, arg1 / arg2)) != NO_ERRS ) {
         SwagDump(refSwag, error);
         return error;
     }

@@ -2,32 +2,19 @@
 #define translator_h
 
 #include <stdio.h>
-#include <sys/stat.h>
+#include <string.h>
 
-#include "countSymb.H"
-#include "swags.h"
 
-typedef struct{
-    const char* file_name;
-    size_t str_count;
-    long long file_size;
-    char* buffer;
-    char** pointerBuffer;
- }fileInfo;
+#include "fileFunc.h"
+
 
 enum transErr_t {
-    NOTRANSERR = 10,
-    OPENFILEERR = 11,
-    NULLTRANS = 12,
-    FREADERR = 13,
-    CALLOCERR = 14,
-    SIZEERR = 15
+    NO_TRANS_ERR = 10,
+    OPEN_FILE_ERR = 11,
+    NULL_PTR_TRANSL = 12,
 };
 
 
-long long FileSize(FILE* refFile);
-transErr_t Plenumation(fileInfo* refFileArch);
-transErr_t Distributor(fileInfo* refFileArch);
 transErr_t ByteCoder(fileInfo* refFileInf, fileInfo* byteCodeFileInf);
 
 #endif //translator_h

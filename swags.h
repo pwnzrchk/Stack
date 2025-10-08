@@ -5,29 +5,32 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define SWAGVIPERR 8008135
-#define FIRSTVIPERR 13
-#define SECONDVIPERR 9
+
+const int SWAGVIPERR = 8008135;
+const int FIRSTVIPERR = 13;
+const int SECONDVIPERR = 9;
+
 
 enum swagErr_t {
-    NOERRS = 0,
-    DATANULLPTR = 1,
-    INCORRECTSIZE = 2,
-    FULLSWAG = 3,
-    SWAGOVERFLOW = 4,
-    DIEDBIRDS = 5,
-    REALLOCERR = 6,
-    NULLDIVISION = 7
-
+    NO_ERRS = 0,
+    DATA_NULL_PTR = 1,
+    INCORRECT_SIZE = 2,
+    FULL_SWAG = 3,
+    SWAG_OVERFLOW = 4,
+    DIED_BIRDS = 5,
+    REALLOC_ERR = 6,
+    NULL_DIVISION = 7
 };
 
+
+typedef ssize_t swagElem_t;
+
 typedef struct swag_t {
-    size_t size;
-    size_t capacity;
-    int* data;
+    swagElem_t size;
+    swagElem_t capacity;
+    swagElem_t* data;
 }swag_t;
 
-typedef int swagElem_t;
 
 swagErr_t SwagInit(swag_t* refSwag, size_t cpcty);
 swagErr_t SwagPush(swag_t* refSwag, swagElem_t val);
