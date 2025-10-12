@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 
 const int SWAGVIPERR = 8008135;
@@ -23,7 +24,7 @@ enum swagErr_t {
 };
 
 
-typedef ssize_t swagElem_t;
+typedef size_t swagElem_t;
 
 typedef struct swag_t {
     swagElem_t size;

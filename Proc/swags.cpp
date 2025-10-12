@@ -96,15 +96,15 @@ swagErr_t SwagDestroy(swag_t* refSwag) {
 
 void SwagDump(swag_t* refSwag, swagErr_t mistake) {
     printf("\n\n----------------S.W.A.G.G.A----------------\n\n");
-    printf("Swag pointer: %p\n", refSwag);
+    printf("Swag pointer: %10p\n", refSwag);
     if (refSwag == NULL)
         return;
-    printf("Swag size: %lu\n", refSwag -> size);
-    printf("Swag capacity: %lu\n", refSwag -> capacity);
-    printf("\nAddres FIRST_VIPERR: %p \t Addres SECOND_VIPERR: %p\n", refSwag -> data, refSwag -> data + (refSwag -> capacity + 1));
+    printf("Swag size:    %10lu\n", refSwag -> size);
+    printf("Swag capacity:%10lu\n", refSwag -> capacity);
+    printf("\nAddres FIRST_VIPERR: %15p \t Addres SECOND_VIPERR: %15p\n", refSwag -> data, refSwag -> data + (refSwag -> capacity + 1));
     if(refSwag -> data == NULL)
         return;
-    printf("FIRST_VIPERR: %zu \t SECOND_VIPERR: %zu\n\n", refSwag -> data[0], refSwag -> data[refSwag -> capacity + 1]);
+    printf("FIRST_VIPERR: %3zu \t SECOND_VIPERR: %3zu\n\n", refSwag -> data[0], refSwag -> data[refSwag -> capacity + 1]);
     printf("Cells of the swag:\n");
 
     if (mistake != DATA_NULL_PTR) {
@@ -125,7 +125,10 @@ void SwagDump(swag_t* refSwag, swagErr_t mistake) {
 
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 swagErr_t SwagSumn(swag_t* refSwag) {
+    assert(refSwag != NULL);
     swagElem_t arg1, arg2 = SWAGVIPERR;
     swagErr_t error, errorFirst, errorSecond = NO_ERRS;
     if ((error = SwagVerify(refSwag)) != NO_ERRS) {
@@ -147,20 +150,24 @@ swagErr_t SwagSumn(swag_t* refSwag) {
 
 
 swagErr_t SwagSub(swag_t* refSwag) {
+    assert(refSwag != NULL);
     swagElem_t arg1, arg2 = SWAGVIPERR;
     swagErr_t error, errorFirst, errorSecond = NO_ERRS;
     if ((error = SwagVerify(refSwag)) != NO_ERRS) {
         SwagDump(refSwag, error);
+        fprintf(stderr, "Error 1 in SUB");
         return error;
     }
 
     if ((errorFirst = SwagPop(refSwag, &arg1)) != NO_ERRS || ((errorSecond = SwagPop(refSwag, &arg2)) != NO_ERRS)) {
         error = (errorFirst != NO_ERRS ? errorFirst : errorSecond);
         SwagDump(refSwag, error);
+        fprintf(stderr, "Error 2 in SUB");
         return error;
     }
     if ((error = SwagPush(refSwag, arg1 - arg2)) != NO_ERRS) {
         SwagDump(refSwag, error);
+        fprintf(stderr, "Error 3 in SUB");
         return error;
     }
     return SwagVerify(refSwag);
@@ -168,6 +175,7 @@ swagErr_t SwagSub(swag_t* refSwag) {
 
 
 swagErr_t SwagMul(swag_t* refSwag) {
+    assert(refSwag != NULL);
     swagElem_t arg1, arg2 = SWAGVIPERR;
     swagErr_t error, errorFirst, errorSecond = NO_ERRS;
     if ((error = SwagVerify(refSwag)) != NO_ERRS) {
@@ -189,6 +197,7 @@ swagErr_t SwagMul(swag_t* refSwag) {
 
 
 swagErr_t SwagDiv(swag_t* refSwag) {
+    assert(refSwag != NULL);
     swagElem_t arg1, arg2 = SWAGVIPERR;
     swagErr_t error, errorFirst, errorSecond = NO_ERRS;
     if ((error = SwagVerify(refSwag)) != NO_ERRS) {

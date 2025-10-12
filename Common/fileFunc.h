@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <sys/stat.h>
+#include <assert.h>
 #include <stdlib.h>
 
 #include "countSymb.h"

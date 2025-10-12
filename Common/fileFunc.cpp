@@ -9,6 +9,7 @@ long long FileSize(FILE* refFile) {
 
 
 fileFunErr_t Plenumation(fileInfo* refFileArch) {
+    assert(refFileArch -> file_name != NULL);
     FILE* file = fopen(refFileArch -> file_name, "r");
     if (!file) {
         fprintf(stderr, "Open file ERR in plenumation, in file %s\n", refFileArch -> file_name);
@@ -26,17 +27,21 @@ fileFunErr_t Plenumation(fileInfo* refFileArch) {
     }
 
     if ((long long)fread(refFileArch -> buffer, sizeof(char), (size_t)refFileArch -> file_size, file) != refFileArch -> file_size) {
-        printf("Read file error\n");                //FIXME - пересмотри типы при работе с big data
+        printf("Read file error\n");
         return FREAD_PLUM_ERR;
     }
     refFileArch -> str_count = (size_t)countSymb(refFileArch -> buffer, '\n', (size_t)refFileArch -> file_size) + 1;
-    fclose(file);                                   //FIXME - тоже самое        FIXME
+    fclose(file);
     return NO_PLUM_ERR;
  }
 
 
 
 fileFunErr_t Distributor(fileInfo* refFileArch) {
+
+    assert(refFileArch -> file_size > 0);
+    assert(refFileArch -> file_name != NULL);
+    assert(refFileArch -> str_count > 0);
     if (refFileArch -> str_count == 0) return INC_PLUM_SIZE;
     refFileArch -> pointerBuffer = (char**)calloc(refFileArch -> str_count, sizeof(char*));
     if (!(refFileArch -> pointerBuffer)) {
@@ -53,7 +58,7 @@ fileFunErr_t Distributor(fileInfo* refFileArch) {
                 refFileArch -> buffer[i] = '\0';
                 refFileArch -> pointerBuffer[stringsAmount++] = &(refFileArch -> buffer[i+1]);
             } else
-                break; //что делать с ошибкой?
+                break; 
         }
     }
     return NO_PLUM_ERR;
