@@ -1,3 +1,21 @@
+
+FIX - Return error and print this message in main
+FIX - #define with args and using of ##
+
+
+
+
+
+
+
+tepedef struct {
+    swag_t
+
+}Labe_info;
+
+
+
+
 //ProcErr_t Proccesor(spu_t* refSpu) {
 //
 //}
@@ -15,8 +33,8 @@
 //ProcErr_t Proccesing(fileInfo* BCFile, swag_t* refSwag) {
 //    if (!BCFile || !refSwag) return NULL_PTR_ERR;
 //
-//    Plenumation(BCFile);        //FIXME буффер чаров              Я бувально распихиваю в массив указателей
-//    Distributor(BCFile);        //FIXME как работать без чаров?   на чар, и выделяю буффер в чарах
+//    Plenumation(BCFile);        //FIX буффер чаров              Я бувально распихиваю в массив указателей
+//    Distributor(BCFile);        //FIX как работать без чаров?   на чар, и выделяю буффер в чарах
 //
 //    bool FlagOfExit = false;
 //    bool* FlagOfExitPTR = &FlagOfExit;

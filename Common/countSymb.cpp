@@ -3,9 +3,8 @@
 #include <stddef.h>
 
 ssize_t countSymb(const char* str, char symbol, size_t summary) {
-
     if (str == NULL) {
-        fprintf(stderr, "Указатель сломан\n");
+        fprintf(stderr, "Incorrect pointer in CountSymb\n");
         return -1;
     }
 

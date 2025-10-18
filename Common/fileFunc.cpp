@@ -7,6 +7,7 @@ long long FileSize(FILE* refFile) {
     return fileFeature.st_size;
 }
 
+//=================================================================================================================================================
 
 fileFunErr_t Plenumation(fileInfo* refFileArch) {
     assert(refFileArch -> file_name != NULL);
@@ -35,14 +36,16 @@ fileFunErr_t Plenumation(fileInfo* refFileArch) {
     return NO_PLUM_ERR;
  }
 
-
+//=================================================================================================================================================
 
 fileFunErr_t Distributor(fileInfo* refFileArch) {
 
     assert(refFileArch -> file_size > 0);
     assert(refFileArch -> file_name != NULL);
     assert(refFileArch -> str_count > 0);
+
     if (refFileArch -> str_count == 0) return INC_PLUM_SIZE;
+
     refFileArch -> pointerBuffer = (char**)calloc(refFileArch -> str_count, sizeof(char*));
     if (!(refFileArch -> pointerBuffer)) {
         fprintf(stderr, "Calloc error for ptr_buffer\n");
@@ -57,8 +60,7 @@ fileFunErr_t Distributor(fileInfo* refFileArch) {
             if (refFileArch -> buffer[i+1] != '\0') {
                 refFileArch -> buffer[i] = '\0';
                 refFileArch -> pointerBuffer[stringsAmount++] = &(refFileArch -> buffer[i+1]);
-            } else
-                break; 
+            } else break;
         }
     }
     return NO_PLUM_ERR;

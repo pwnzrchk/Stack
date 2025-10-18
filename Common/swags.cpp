@@ -5,7 +5,6 @@
 #include "swags.h"
 
 
-
 swagErr_t SwagVerify(swag_t* refSwag) {
     if (refSwag == NULL || refSwag -> data == NULL)
         return DATA_NULL_PTR;
@@ -18,6 +17,7 @@ swagErr_t SwagVerify(swag_t* refSwag) {
     return NO_ERRS;
 }
 
+//=================================================================================================================================================
 
 swagErr_t SwagInit(swag_t* refSwag, size_t cpcty) {
 
@@ -37,6 +37,8 @@ swagErr_t SwagInit(swag_t* refSwag, size_t cpcty) {
     refSwag -> data[cpcty + 1] = SECONDVIPERR;
     return SwagVerify(refSwag);
 }
+
+//=================================================================================================================================================
 
 swagErr_t SwagPush(swag_t* refSwag, swagElem_t val) {
 
@@ -68,6 +70,7 @@ swagErr_t SwagPush(swag_t* refSwag, swagElem_t val) {
     return SwagVerify(refSwag);
 }
 
+//=================================================================================================================================================
 
 swagErr_t SwagPop(swag_t* refSwag, swagElem_t* popped) {
     if (SwagVerify(refSwag) != NO_ERRS) {
@@ -81,6 +84,7 @@ swagErr_t SwagPop(swag_t* refSwag, swagElem_t* popped) {
     return SwagVerify(refSwag);
 }
 
+//=================================================================================================================================================
 
 swagErr_t SwagDestroy(swag_t* refSwag) {
     if (SwagVerify(refSwag) != NO_ERRS) {
@@ -93,6 +97,7 @@ swagErr_t SwagDestroy(swag_t* refSwag) {
     return NO_ERRS;
 }
 
+//=================================================================================================================================================
 
 void SwagDump(swag_t* refSwag, swagErr_t mistake) {
     printf("\n\n----------------S.W.A.G.G.A----------------\n\n");
@@ -123,9 +128,7 @@ void SwagDump(swag_t* refSwag, swagErr_t mistake) {
     printf("\n\n----------------S.W.A.G.G.A----------------\n\n");
 }
 
-
-//----------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+//=================================================================================================================================================
 
 swagErr_t SwagSumn(swag_t* refSwag) {
     assert(refSwag != NULL);
@@ -148,6 +151,7 @@ swagErr_t SwagSumn(swag_t* refSwag) {
     return SwagVerify(refSwag);
 }
 
+//=================================================================================================================================================
 
 swagErr_t SwagSub(swag_t* refSwag) {
     assert(refSwag != NULL);
@@ -173,6 +177,7 @@ swagErr_t SwagSub(swag_t* refSwag) {
     return SwagVerify(refSwag);
 }
 
+//=================================================================================================================================================
 
 swagErr_t SwagMul(swag_t* refSwag) {
     assert(refSwag != NULL);
@@ -195,6 +200,7 @@ swagErr_t SwagMul(swag_t* refSwag) {
     return SwagVerify(refSwag);
 }
 
+//=================================================================================================================================================
 
 swagErr_t SwagDiv(swag_t* refSwag) {
     assert(refSwag != NULL);
@@ -216,3 +222,5 @@ swagErr_t SwagDiv(swag_t* refSwag) {
     }
     return SwagVerify(refSwag);
 }
+
+//=================================================================================================================================================

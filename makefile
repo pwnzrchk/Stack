@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Wall -std=c++17 -Wall -Wextra -Weffc++ -Wc++14-compat -Wmissing-declarations   \
+CFLAGS = -Og -ggdb -Wall -std=c++17 -Wall -Wextra -Weffc++ -Wc++14-compat -Wmissing-declarations   \
 		 -Wcast-align -Wcast-qual -Wchar-subscripts -Wconversion -Wctor-dtor-privacy     \
 		 -Wempty-body -Wfloat-equal -Wformat-nonliteral -Wformat-security -Wformat=2     \
 		 -Winline -Wnon-virtual-dtor -Woverloaded-virtual -Wpacked -Wpointer-arith       \
@@ -13,14 +13,14 @@ CFLAGS = -Wall -std=c++17 -Wall -Wextra -Weffc++ -Wc++14-compat -Wmissing-declar
 		 -fPIE -Werror=vla -fsanitize=address
 
 
-ASM = Assembler/assembling.cpp Assembler/translator.cpp
+ASM = Assembler/main.cpp Assembler/translator.cpp
 ASM_OBJ = $(ASM:.cpp=.o)
 
 $(ASM_OBJ): %.o: %.cpp
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 
-COMM = Common/fileFunc.cpp Common/countSymb.cpp
+COMM = Common/fileFunc.cpp Common/countSymb.cpp Common/swags.cpp
 COMM_OBJ = $(COMM:.cpp=.o)
 
 $(COMM_OBJ): %.o: %.cpp
@@ -34,7 +34,7 @@ $(MAIN_OBJ): %.o: %.cpp
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 
-PROC = Proc/swags.cpp Proc/proccesor.cpp
+PROC = Proc/proccesor.cpp
 PROC_OBJ = $(PROC:.cpp=.o)
 
 $(PROC_OBJ): %.o: %.cpp
