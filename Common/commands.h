@@ -20,7 +20,9 @@ enum AsmCom_t {
     JAE =       15,
     JE =        16,
     JNE =       17,
-    LABEL =     18,
+    CALL =      18,
+    RET =       19,
+    LABEL =     25,
     ERROR_COM = 99
 };
 //Codes of registers
@@ -33,5 +35,7 @@ enum AsmReg_t {
 };
 
 static const int kRegistersAmount = 4;
+static const int kReturnAddressesStackSize = 10;
+static const int kBufferMultiplier = 2;
 
 #endif //commands_h

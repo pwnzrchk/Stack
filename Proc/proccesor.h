@@ -18,6 +18,7 @@ typedef struct {
     swagElem_t* ByteCodeBuf;
     size_t      pc;
     swagElem_t  regs[kRegistersAmount];
+    swag_t stack_return_addresses;
 }spu_t;
 
 enum ProcErr_t {
@@ -34,15 +35,16 @@ enum ProcErr_t {
     Mul_ERR =       8,
     Div_ERR =       9,
     DUMP_ERR =      10,
-    JMP_ERR =       13
+    JMP_ERR =       13,
+    kRetError =     14,
+    kCallError =    15
 };
 
-//Func's for work with bytecode, registers
+//Func's for work with bytecode
 ProcErr_t Proccesing(spu_t* refSpu);
 fileFunErr_t BCFileToArr(fileInfo* refBCFile, swagElem_t** refArr);
 ProcErr_t SpuConstructor(spu_t* refSpu, fileInfo* refBCFile);
-ProcErr_t RegPop (spu_t* refSpu, size_t i);
-ProcErr_t RegPush(spu_t* refSpu, size_t i);
+ProcErr_t MemoryCalculator(fileInfo* reference_byte_code_file, size_t* calculated_size);
 
 //Variations of JMP's
 ProcErr_t Jmp(spu_t* refSpu, size_t index);
@@ -52,6 +54,14 @@ ProcErr_t Jae(spu_t* refSpu, size_t index);
 ProcErr_t Ja(spu_t* refSpu, size_t index);
 ProcErr_t Je(spu_t* refSpu, size_t index);
 ProcErr_t Jne(spu_t* refSpu, size_t index);
+
+//Functions for work with registers
+ProcErr_t RegPop (spu_t* refSpu, size_t i);
+ProcErr_t RegPush(spu_t* refSpu, size_t i);
+
+//Call and return functions
+ProcErr_t CallFunction(spu_t* spu, size_t new_pc);
+ProcErr_t RetFunction(spu_t* spu);
 
 void ErrorHandler(int error_code);
 

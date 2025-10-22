@@ -6,7 +6,7 @@
 
 //=================================================================================================================================================
 
-#define CASE_TEMPLATE_ERROR_HANDLER (error_code)                \
+#define CASE_TEMPLATE_ERROR_HANDLER(error_code)                 \
         fprintf(stderr, #error_code " error in processing\n");  \
         break;
 
@@ -22,12 +22,12 @@
 
 //=================================================================================================================================================
 
-#define JMP_TEMPLATE(operation, printCode)                                                                  \
+#define JMP_TEMPLATE(operation)                                                                             \
         if (index < 1 || index >= refSpu->ByteCodeBuf[0]) {                                                 \
             return INCORECT_SIZE;                                                                           \
         }                                                                                                   \
         swagElem_t compared1, compared2 = 0;                                                                \
-        if ((SwagPop(&SwagAdr, &compared1) != NO_ERRS) || (SwagPop(&SwagAdr, &compared2) != NO_ERRS)) {     \                                                        \
+        if ((SwagPop(&SwagAdr, &compared1) != NO_ERRS) || (SwagPop(&SwagAdr, &compared2) != NO_ERRS)) {     \
             return JMP_ERR;                                                                                 \
         }                                                                                                   \
         if (compared1 operation compared2) refSpu->pc = index + 1;                                          \
@@ -50,11 +50,11 @@ ProcErr_t Proccesing(spu_t* refSpu) {
     if ((refSpu -> regs) == NULL)       return  NULL_PTR_ERR;
     if(refSpu -> Swag.data == NULL)     return  NULL_PTR_ERR;
 
-    bool FlagOfExit = false;
-    swagErr_t error = NO_ERRS;
-    ProcErr_t Proc_err = WITHOUT_ERRS;
-
+    bool FlagOfExit =           false;
+    swagErr_t error =           NO_ERRS;
+    ProcErr_t Proc_err =        WITHOUT_ERRS;
     swagElem_t BC_Buffer_Size = refSpu -> ByteCodeBuf[0];
+
     for(refSpu -> pc = 0; refSpu -> pc < BC_Buffer_Size && !FlagOfExit;) {
         const swagElem_t comand = refSpu -> ByteCodeBuf[(++refSpu ->pc)];
         swagElem_t arg = 0;
@@ -129,6 +129,14 @@ ProcErr_t Proccesing(spu_t* refSpu) {
 
             case JNE:   JMP_TEMP_CASE(Jne);
 
+            case CALL:
+                if (CallFunction(refSpu, refSpu -> ByteCodeBuf[++(refSpu ->pc)]) != WITHOUT_ERRS) return kCallError;
+                break;
+
+            case RET:
+                if (RetFunction(refSpu) != WITHOUT_ERRS) return kRetError;
+                break;
+
             case ERROR_COM:
             default:
                 return UNKNW_CMD;
@@ -141,23 +149,21 @@ ProcErr_t Proccesing(spu_t* refSpu) {
 //=================================================================================================================================================
 
 fileFunErr_t BCFileToArr(fileInfo* refBCFile, swagElem_t** refArr) {
-    assert(refBCFile != NULL && refArr != NULL);
-    Plenumation(refBCFile);
-    Distributor(refBCFile);
-
-    *refArr = (swagElem_t*)calloc((size_t)((refBCFile -> str_count)*2 + 2), sizeof(**refArr));
+    size_t size_of_memory = 0;
+    if (MemoryCalculator(refBCFile, &size_of_memory) != WITHOUT_ERRS) return NULL_PTR_PLUM;
+    //ОТЛАДОЧНАЯ fprintf(stderr, "Size of memory : %zu\n", size_of_memory);
+    *refArr = (swagElem_t*)calloc((size_t)(size_of_memory + 1), sizeof(**refArr));
 
     if (*refArr == NULL) {
         fprintf(stderr, "Calloc error for BC_buffer\n");
         return NULL_PTR_PLUM;
     }
-    (*refArr)[(refBCFile -> str_count)*2 + 1] = SWAGVIPERR;
-    (*refArr)[0] = (refBCFile -> str_count)*2 + 1;
+
+    (*refArr)[0] = size_of_memory + 1;
 
     size_t arrIndex = 0;
-    size_t BC_Buffer_Size = (refBCFile -> str_count)*2 + 1;
-    size_t Commands_Amount = refBCFile -> str_count - 1;
-    for(size_t j = 0; j < Commands_Amount && arrIndex < BC_Buffer_Size + 1; j++) {
+    size_t strings_amount = refBCFile->str_count - 1;
+    for(size_t j = 0; j < strings_amount && arrIndex < size_of_memory + 1; j++) {
 
         const char* workline = refBCFile -> pointerBuffer[j];
         if (!workline) {
@@ -168,7 +174,6 @@ fileFunErr_t BCFileToArr(fileInfo* refBCFile, swagElem_t** refArr) {
         swagElem_t arg = 0;
         swagElem_t comand = 0;
         int scanned = 0;
-
 
         if ((scanned = sscanf(workline, "%zd %zd", &comand, &arg)) <= 0) {
             fprintf(stderr, "Error scanf BYTECODE file\nString No %zu\n", j + 1);
@@ -188,6 +193,41 @@ fileFunErr_t BCFileToArr(fileInfo* refBCFile, swagElem_t** refArr) {
 
 //=================================================================================================================================================
 
+ProcErr_t MemoryCalculator(fileInfo* reference_byte_code_file, size_t* calculated_size) {
+    assert(reference_byte_code_file != NULL && calculated_size != NULL);
+    Plenumation(reference_byte_code_file);
+    Distributor(reference_byte_code_file);
+
+    size_t strings_amount = (reference_byte_code_file->str_count - 1);
+    size_t memory_size =    0;
+
+    for (size_t i = 0; i < strings_amount; i++) {
+        const char* workline = reference_byte_code_file->pointerBuffer[i];
+        if (!workline) {
+            // fprintf(stderr, "Null line pointer at %zu\n", i+1);
+            return NULL_PTR_ERR;
+        }
+        int cmd = 0;
+        sscanf(workline, "%d", &cmd);
+        if (cmd == ERROR_COM) return UNKNW_CMD;
+        switch (cmd) {
+            case POP:   case SUM:   case SUB: case MUL:
+            case DIV:   case DUMP:  case HLT: case RET:
+                memory_size += 1;
+                break;
+            default:
+                memory_size += 2;
+                break;
+        }
+    }
+
+    *calculated_size = memory_size;
+
+    return WITHOUT_ERRS;
+}
+
+//=================================================================================================================================================
+
 ProcErr_t SpuConstructor(spu_t* refSpu, fileInfo* refBCFile) {
     assert(refBCFile != NULL);
     assert(refSpu != NULL);
@@ -199,8 +239,13 @@ ProcErr_t SpuConstructor(spu_t* refSpu, fileInfo* refBCFile) {
     }
 
     refSpu -> Swag = SpuSwag;
-    BCFileToArr(refBCFile, &(refSpu -> ByteCodeBuf));   //А как штука инициализируется?
+    BCFileToArr(refBCFile, &(refSpu -> ByteCodeBuf));
     refSpu -> pc = 0;
+
+    swag_t spu_return_stack = {};
+    SwagInit(&spu_return_stack, kReturnAddressesStackSize);
+    refSpu->stack_return_addresses = spu_return_stack;
+
     return WITHOUT_ERRS;
 }
 
@@ -249,27 +294,27 @@ ProcErr_t Jmp(spu_t* refSpu, size_t index) {
 //=================================================================================================================================================
 
 ProcErr_t Jbe(spu_t* refSpu, size_t index) {
-    JMP_TEMPLATE(<=, JBE);
+    JMP_TEMPLATE(<=);
 }
 
 ProcErr_t Jb(spu_t* refSpu, size_t index) {
-    JMP_TEMPLATE(<, JB);
+    JMP_TEMPLATE(<);
 }
 
 ProcErr_t Jae(spu_t* refSpu, size_t index) {
-    JMP_TEMPLATE(>=, JAE);
+    JMP_TEMPLATE(>=);
 }
 
 ProcErr_t Ja(spu_t* refSpu, size_t index) {
-    JMP_TEMPLATE(>, JA);
+    JMP_TEMPLATE(>);
 }
 
 ProcErr_t Je(spu_t* refSpu, size_t index) {
-    JMP_TEMPLATE(==, JE);
+    JMP_TEMPLATE(==);
 }
 
 ProcErr_t Jne(spu_t* refSpu, size_t index) {
-    JMP_TEMPLATE(!=, JNE);
+    JMP_TEMPLATE(!=);
 }
 
 //=================================================================================================================================================
@@ -315,9 +360,33 @@ void ErrorHandler(int error_code) {
         case UNKNW_CMD:
             CASE_TEMPLATE_ERROR_HANDLER(Comand)
 
+        case kRetError:
+            CASE_TEMPLATE_ERROR_HANDLER(ReturnSwag)
+
+        case kCallError:
+            CASE_TEMPLATE_ERROR_HANDLER(Call)
+
         default:
             fprintf(stderr, "ErrorHandler mistake");
     }
+}
+
+//=================================================================================================================================================
+//Ассерты
+ProcErr_t CallFunction(spu_t* spu, size_t new_pc) {
+    if (SwagPush(&spu->stack_return_addresses, spu->pc + 1) != NO_ERRS) return kCallError;
+    spu->pc = new_pc;
+    return WITHOUT_ERRS;
+}
+
+//=================================================================================================================================================
+//Ассерты
+ProcErr_t RetFunction(spu_t* spu) {
+    size_t return_pc = 0;
+    SwagPop(&spu->stack_return_addresses, &return_pc);
+    if (return_pc == 0) return kRetError;
+    spu->pc = return_pc;
+    return WITHOUT_ERRS;
 }
 
 //=================================================================================================================================================

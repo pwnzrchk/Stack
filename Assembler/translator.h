@@ -18,30 +18,31 @@
 #define LABLE_SIZE 128
 
 enum transErr_t {
-    NO_TRANS_ERR =    10,
-    OPEN_FILE_ERR =   11,
-    NULL_PTR_TRANSL = 12,
-    kLabelErr =       13,
-    kErrorCom =       14
+    NO_TRANS_ERR =         10,
+    OPEN_FILE_ERR =        11,
+    NULL_PTR_TRANSL =      12,
+    kLabelErr =            13,
+    kErrorCom =            14,
+    kPrinterError =        15,
+    kSizeCalculatorError = 16
 };
 
 typedef struct {
-    char*  name;
-    int    addres;
-    swag_t addreses_uses;
+    char*   name;
+    ssize_t addres;
+    swag_t  addreses_uses;
 }Label_info;
 
 typedef struct {
-    int* Buffer_Arr;
-    fileInfo AsmFile;
-    fileInfo ByteCodeFile;
-    Label_info Label_Table[LABEL_TABEL_SIZE];
-    size_t label_count;
+    int*        Buffer_Arr;
+    fileInfo    AsmFile;
+    fileInfo    ByteCodeFile;
+    Label_info  Label_Table[LABEL_TABEL_SIZE];
+    size_t      label_count;
 }Translator;
 
 static const int kTrashValue = -666;
 static const int kInvalidAddress = -1;
-static const int kBufferMultiplier = 2;
 static const int kInvalidReturnValue = -1;
 
 
@@ -52,9 +53,13 @@ int funcFinder (char* refLine);
 int regFinder (char* refLine);
 int argFinder (char* refLine);
 char* labelFinder(char* refLine);
+void ErrorHandler(transErr_t error_code);
+transErr_t FilePrinter(Translator* translator, FILE* printable_file);
+transErr_t SizeCalculator(Translator* translator, size_t* calculated_size);
+
 //Functions for work with labels
 transErr_t TranslatorConstructor(Translator* refTranslator, fileInfo* refFileInf, fileInfo* byteCodeFileInf);
-int LabelParserCom(char* refLabel, Translator* refTranslator, size_t Counter_Index);
+ssize_t LabelParserCom(char* refLabel, Translator* refTranslator, size_t Counter_Index);
 int LabelParser(char* refLabel, Translator* refTranslator, size_t CounterIndex);
 bool LoopCmp(char const* refLabel, Translator* refTrans, int* index);
 transErr_t PostProcessor (Translator* refTranslator);

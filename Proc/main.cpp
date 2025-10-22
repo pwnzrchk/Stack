@@ -11,8 +11,8 @@ int main(void) {
     spu_t main_spu = {};
 
     SpuConstructor(&main_spu, &byteCodeFile);
-
-    if ((ProcErr_t code_error = Proccesing(&main_spu)) != WITHOUT_ERRS) {
+    ProcErr_t code_error = WITHOUT_ERRS;
+    if ((code_error = Proccesing(&main_spu)) != WITHOUT_ERRS) {
         ErrorHandler(code_error);
         return 0;
     }
