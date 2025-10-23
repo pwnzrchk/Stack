@@ -30,7 +30,7 @@
         if ((SwagPop(&SwagAdr, &compared1) != NO_ERRS) || (SwagPop(&SwagAdr, &compared2) != NO_ERRS)) {     \
             return JMP_ERR;                                                                                 \
         }                                                                                                   \
-        if (compared1 operation compared2) refSpu->pc = index + 1;                                          \
+        if (compared1 operation compared2) refSpu->pc = index;                                          \
         return WITHOUT_ERRS;
 
 //=================================================================================================================================================
@@ -44,8 +44,10 @@
 //=================================================================================================================================================
 
 
-
+// FIXME - asserts
 ProcErr_t Proccesing(spu_t* refSpu) {
+    assert(refSpu && refSpu->ByteCodeBuf && refSpu->regs && refSpu->Swag.data);
+
     if (refSpu -> ByteCodeBuf == NULL)  return  NULL_PTR_ERR;
     if ((refSpu -> regs) == NULL)       return  NULL_PTR_ERR;
     if(refSpu -> Swag.data == NULL)     return  NULL_PTR_ERR;
@@ -62,7 +64,8 @@ ProcErr_t Proccesing(spu_t* refSpu) {
             fprintf(stderr, "Null comand pointer in %zu ell in ARR\n", refSpu -> ByteCodeBuf[refSpu ->pc] + 1);
             return NULL_PTR_ERR;
         }
-// ErrorHandler - функция для обработки ошибок (принимает номер ошибки и выводит сообщение)
+        // ErrorHandler - функция для обработки ошибок (принимает номер ошибки и выводит сообщение)
+        // printf("Comand: %zu\n", comand);
         switch(comand) {
             case PUSH:
                 if ((error = SwagPush(&(SwagAdr), refSpu -> ByteCodeBuf[++(refSpu ->pc)])) != NO_ERRS) {
@@ -101,7 +104,7 @@ ProcErr_t Proccesing(spu_t* refSpu) {
 
             case HLT:
                 FlagOfExit = true;
-                break;
+                return WITHOUT_ERRS;
 
             case PUSHR:
                 if ((Proc_err = RegPush(refSpu, refSpu -> ByteCodeBuf[++(refSpu -> pc)])) != WITHOUT_ERRS) {
@@ -137,6 +140,19 @@ ProcErr_t Proccesing(spu_t* refSpu) {
                 if (RetFunction(refSpu) != WITHOUT_ERRS) return kRetError;
                 break;
 
+            case PUSHM:
+                if (PushMemory(refSpu, refSpu -> ByteCodeBuf[++(refSpu ->pc)]) != WITHOUT_ERRS) return kPushMemoryError;
+                break;
+
+            case POPM:
+                if (PopMemory(refSpu, refSpu -> ByteCodeBuf[++(refSpu ->pc)]) != WITHOUT_ERRS) return kPopMemoryError;
+                break;
+
+            case DRAW:
+                DrawMemory(refSpu);
+                break;
+
+
             case ERROR_COM:
             default:
                 return UNKNW_CMD;
@@ -149,17 +165,18 @@ ProcErr_t Proccesing(spu_t* refSpu) {
 //=================================================================================================================================================
 
 fileFunErr_t BCFileToArr(fileInfo* refBCFile, swagElem_t** refArr) {
+    assert(refArr != NULL);
+
     size_t size_of_memory = 0;
     if (MemoryCalculator(refBCFile, &size_of_memory) != WITHOUT_ERRS) return NULL_PTR_PLUM;
     //ОТЛАДОЧНАЯ fprintf(stderr, "Size of memory : %zu\n", size_of_memory);
     *refArr = (swagElem_t*)calloc((size_t)(size_of_memory + 1), sizeof(**refArr));
-
     if (*refArr == NULL) {
         fprintf(stderr, "Calloc error for BC_buffer\n");
         return NULL_PTR_PLUM;
     }
 
-    (*refArr)[0] = size_of_memory + 1;
+    (*refArr)[0] = size_of_memory;
 
     size_t arrIndex = 0;
     size_t strings_amount = refBCFile->str_count - 1;
@@ -195,6 +212,7 @@ fileFunErr_t BCFileToArr(fileInfo* refBCFile, swagElem_t** refArr) {
 
 ProcErr_t MemoryCalculator(fileInfo* reference_byte_code_file, size_t* calculated_size) {
     assert(reference_byte_code_file != NULL && calculated_size != NULL);
+
     Plenumation(reference_byte_code_file);
     Distributor(reference_byte_code_file);
 
@@ -213,6 +231,7 @@ ProcErr_t MemoryCalculator(fileInfo* reference_byte_code_file, size_t* calculate
         switch (cmd) {
             case POP:   case SUM:   case SUB: case MUL:
             case DIV:   case DUMP:  case HLT: case RET:
+            case DRAW:
                 memory_size += 1;
                 break;
             default:
@@ -233,7 +252,7 @@ ProcErr_t SpuConstructor(spu_t* refSpu, fileInfo* refBCFile) {
     assert(refSpu != NULL);
 
     swag_t SpuSwag = {};
-    SwagInit(&SpuSwag, InitialSize);
+    SwagInit(&SpuSwag, kInitialSize);
     for (int i = 0; i < kRegistersAmount; i++) {
         refSpu -> regs[i] = 0;
     }
@@ -245,6 +264,8 @@ ProcErr_t SpuConstructor(spu_t* refSpu, fileInfo* refBCFile) {
     swag_t spu_return_stack = {};
     SwagInit(&spu_return_stack, kReturnAddressesStackSize);
     refSpu->stack_return_addresses = spu_return_stack;
+
+    refSpu->ram = (swagElem_t*)calloc(kSizeOfRam, sizeof(swagElem_t));
 
     return WITHOUT_ERRS;
 }
@@ -390,6 +411,52 @@ ProcErr_t RetFunction(spu_t* spu) {
 }
 
 //=================================================================================================================================================
+
+ProcErr_t PushMemory(spu_t* spu, swagElem_t register_number) {
+    swagElem_t inserted_value = spu->ram[spu->regs[register_number]];
+    if (SwagPush(&(spu->Swag), inserted_value) != NO_ERRS) return kPushMemoryError;
+    return WITHOUT_ERRS;
+}
+
+//=================================================================================================================================================
+
+ProcErr_t PopMemory(spu_t* spu, swagElem_t register_number) {
+    swagElem_t inserted_value = (swagElem_t)kTrashValue;
+    if ((SwagPop(&(spu->Swag), &inserted_value) != NO_ERRS) || inserted_value == (swagElem_t)kTrashValue) return kPopMemoryError;
+    spu->ram[spu->regs[register_number]] = inserted_value;
+    return WITHOUT_ERRS;
+}
+
+//=================================================================================================================================================
+
+ProcErr_t DrawMemory(spu_t* spu) {
+    assert(spu);
+
+    for (int i = 0; i < kSizeOfRam; i++) {
+        printf("%c", spu->ram[i]);
+        if (i%10 == 0) printf("\n"); // FIXME - 10?
+    }
+    return WITHOUT_ERRS;
+}
+
+//=================================================================================================================================================
+
+ProcErr_t SpuDestroyer(spu_t* spu) {
+    assert(spu);
+
+    spu->pc = (size_t)kTrashValue;
+    for(int i = 0; i < kRegistersAmount; i++) {
+        spu->regs[i] = (swagElem_t)kTrashValue;
+    }
+    if (SwagDestroy(&(spu->Swag)) != NO_ERRS)                   return kSpuDestroyError;
+    if (SwagDestroy(&(spu->stack_return_addresses)) != NO_ERRS) return kSpuDestroyError;
+    free(spu->ByteCodeBuf);
+    free(spu->ram);
+    return WITHOUT_ERRS;
+}
+
+//=================================================================================================================================================
+
 #undef SwagAdr
 #undef MakeErr
 #undef REPLACE

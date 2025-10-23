@@ -16,6 +16,7 @@ int main(void) {
         ErrorHandler(code_error);
         return 0;
     }
+    SpuDestroyer(&main_spu);
     printf("Processed well...\n");
     return 0;
 }

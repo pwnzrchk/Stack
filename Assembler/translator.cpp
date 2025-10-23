@@ -31,38 +31,47 @@
 //=================================================================================================================================================
 
 transErr_t  ByteCoder(Translator* refTranslator) {
+    if (BufferFiller(refTranslator) != NO_TRANS_ERR)  return kBufferFillerError;
+    if (PostProcessor(refTranslator) != NO_TRANS_ERR) return kPostProcessorError;
+    if (FilePrinter(refTranslator) != NO_TRANS_ERR)   return kFilePrinterError;
+    return NO_TRANS_ERR;
+}
 
-    if (!(refTranslator -> AsmFile.file_name) || !(refTranslator -> ByteCodeFile.file_name)) return NULL_PTR_TRANSL;
+ //=================================================================================================================================================
 
-    FILE* fileByteCode = fopen(refTranslator -> ByteCodeFile.file_name, "w");
-    if (!fileByteCode) {
-        fprintf(stderr, "File open error - byteCode\n");
-        return OPEN_FILE_ERR;
-    }
-    refTranslator->ByteCodeFile.str_count = refTranslator->AsmFile.str_count;
+transErr_t BufferFiller(Translator* refTranslator) {
+    assert(refTranslator != NULL);
 
-    size_t borderOfAsm = refTranslator->AsmFile.str_count - 4;  //FIXME - откуда?
+    if (!(refTranslator -> AsmFile.file_name)) return NULL_PTR_TRANSL;
+
+    size_t borderOfAsm = refTranslator->AsmFile.str_count;
     refTranslator -> Buffer_Arr = (int*)calloc(borderOfAsm*kBufferMultiplier, sizeof(int));
+    if (!refTranslator->Buffer_Arr) {
+        fprintf(stderr, "Calloc error for Buffer_Arr\n");
+        return NULL_PTR_TRANSL;
+    }
+
     size_t counterIndex = 0;
 
     for (size_t i = 0; i < borderOfAsm; i++) {
-        if (!refTranslator->AsmFile.pointerBuffer) break;
+        if (!refTranslator->AsmFile.pointerBuffer) return NULL_PTR_TRANSL;
 
         char* workline = refTranslator->AsmFile.pointerBuffer[i];
         if (!workline) break;
+        if(workline[0] == '\0' || workline[0] == '\n') continue;
 
         int comand = funcFinder(workline);
         int reg = ERROR_REG;
-        if (comand == POPR || comand == PUSHR) reg = regFinder(workline);
+        if (comand == POPR || comand == PUSHR || comand == POPM || comand == PUSHM) reg = regFinder(workline);
         int argmnt = argFinder(workline);
 
         char* LabelName = NULL;
-        char* offset_for_label = strchr(workline, ':');
+        char* offset_for_label = strchr(workline, kLabelMarker);
         if (offset_for_label != NULL) {
             LabelName = labelFinder(offset_for_label + 1);
         }
 
-        if(workline[0] == '\0') continue;
+        //ОТЛАДОЧНАЯ - fprintf(stderr, "[%zu] - %d\n", i, comaxnd);
 
         switch (comand) {
             case PUSH:
@@ -78,11 +87,14 @@ transErr_t  ByteCoder(Translator* refTranslator) {
             case DUMP:
             case HLT:
             case RET:
+            case DRAW:
                 refTranslator -> Buffer_Arr[counterIndex++] = comand;
                 break;
 
             case PUSHR:
             case POPR:
+            case PUSHM:
+            case POPM:
                 refTranslator -> Buffer_Arr[counterIndex++] = comand;
                 REG_TMPL
 
@@ -107,41 +119,57 @@ transErr_t  ByteCoder(Translator* refTranslator) {
                 return kErrorCom;
         }
     }
-
-    PostProcessor(refTranslator);
-
-    FilePrinter(refTranslator, fileByteCode);
-
-    fclose(fileByteCode);
     return NO_TRANS_ERR;
 }
 
 //=================================================================================================================================================
-//Будет считать количество команд двухаргументных и одноаргументных и потом realloc под точный размер. В два пробега подсчет: кол-ва элементов и потом запись в реаллокнутое
-transErr_t FilePrinter(Translator* translator, FILE* printable_file) {
 
-    size_t memory_size = 0;
+// transErr_t FilePrinter(Translator* translator, FILE* printable_file)
+
+//=================================================================================================================================================
+
+transErr_t FilePrinter(Translator* translator) {
+    assert(translator != NULL);
+
+    size_t memory_size = (size_t)kTrashValue;
     if (SizeCalculator(translator, &memory_size) != NO_TRANS_ERR) return kSizeCalculatorError;
+    //ОТЛАДОЧНАЯ
+    fprintf(stderr, "Memory size = %zu\n", memory_size);
+
+    FILE* printable_file = fopen(translator->ByteCodeFile.file_name, "w");
+    if (!printable_file) return NULL_PTR_TRANSL;
 
     int* template_buffer = (int*)calloc(memory_size, sizeof(int));
+    if (template_buffer == NULL) {
+        fprintf(stderr, "Callc error for template buffer in FilePrinter\n");
+        return NULL_PTR_TRANSL;
+    }
     memcpy(template_buffer, translator->Buffer_Arr, memory_size * sizeof(int));
     free(translator->Buffer_Arr);
     translator->Buffer_Arr = template_buffer;
-
-    printf("Memory size = %zu\n", memory_size);
+    
+    //ОТЛАДОЧНАЯ
+    // printf("Memory size = %zu\n", memory_size);
 
     for (size_t i = 0; i < memory_size; i++) {
         fprintf(printable_file, "%d", translator->Buffer_Arr[i]);
         // printf("[%zu] %d\n", i, translator->Buffer_Arr[i]);
 
         int cmd = translator->Buffer_Arr[i];
-        if (cmd == POP || cmd == SUM || cmd == SUB || cmd == MUL || cmd == DIV || cmd == DUMP || cmd == HLT || cmd == RET)
+        if (!TwoArgument(cmd))
             fprintf(printable_file, "\n");
         else
             fprintf(printable_file, " %d\n", translator->Buffer_Arr[++i]);
     }
-
+    fclose(printable_file);
     return NO_TRANS_ERR;
+}
+
+//=================================================================================================================================================
+
+bool TwoArgument(int cmd) {
+    if (cmd == POP || cmd == SUM || cmd == SUB || cmd == MUL || cmd == DIV || cmd == DUMP || cmd == HLT || cmd == RET || cmd == DRAW) return true;
+    return false;
 }
 
 //=================================================================================================================================================
@@ -156,8 +184,9 @@ transErr_t SizeCalculator(Translator* translator, size_t* calculated_size) {
         if (cmd == ERROR_COM) return kSizeCalculatorError;
         // printf("%d Comand - %d\n", i, cmd);
         switch (cmd) {
-            case POP: case SUM: case SUB: case MUL: case DIV:
-            case DUMP: case HLT: case RET:
+            case POP: case SUM:  case SUB: case MUL:
+            case DIV: case DUMP: case HLT: case RET:
+            case DRAW:
                 memory_size += 1;
                 break;
             default:
@@ -191,14 +220,17 @@ int regFinder (char* refLine) {
 //=================================================================================================================================================
 
 int funcFinder (char* refLine) {
+    assert(refLine);
+
     if (refLine[0] == ':') return LABEL;
     char ArrForCom[ComandLenth];
     sscanf(refLine, "%10s", ArrForCom);
-    const char* Commands[] = {"PUSH", "POP", "SUM", "SUB",
-                              "MUL", "DIV", "DUMP", "HLT",
-                              "PUSHR", "POPR", "JMP", "JB",
-                              "JBE", "JA", "JAE", "JE",
-                              "JNE", "CALL", "RET"};
+    const char* Commands[] = {"PUSH" ,"POP" ,"SUM" ,"SUB",
+                              "MUL"  ,"DIV" ,"DUMP","HLT",
+                              "PUSHR","POPR","JMP" ,"JB",
+                              "JBE"  ,"JA"  ,"JAE" ,"JE",
+                              "JNE"  ,"CALL","RET" ,"PUSHM",
+                              "POPM" ,"DRAW"  };
     for (int i = 0; i < (int)(sizeof(Commands)/sizeof(Commands[0])); i++) {
         if ((strcmp(ArrForCom, Commands[i])) == 0) {
             return i + 1;
@@ -210,7 +242,9 @@ int funcFinder (char* refLine) {
 //=================================================================================================================================================
 
 int argFinder (char* refLine) {
-    if (refLine == NULL) return kTrashValue;
+    assert(refLine);
+
+    //ОТЛАДОЧНАЯ  if (refLine == NULL) return kTrashValue;
     int arg = kTrashValue;
     if (sscanf(refLine, "%*s %d", &arg) == 1) {
         return arg;
@@ -221,9 +255,15 @@ int argFinder (char* refLine) {
 //=================================================================================================================================================
 
 char* labelFinder(char* refLine) {
+    assert(refLine);
+
     char temp[LABLE_SIZE];
     sscanf(refLine, "%127s", temp);
     char* Buffer = (char*)calloc(strlen(temp) + 1, sizeof(char));
+    if (Buffer == NULL) {
+        fprintf(stderr, "Calloc error in labelFinder\n");
+        return NULL;
+    }
     strcpy(Buffer, temp);
     return Buffer;
 }
@@ -231,17 +271,10 @@ char* labelFinder(char* refLine) {
 //===============================================================================================================================================
 //REVIEW - With flag (boolean value) is clearer what is doing??
 ssize_t LabelParserCom(char* refLabel, Translator* refTranslator, size_t Counter_Index) {
+    assert(refLabel && refTranslator);
+
     int index = kInvalidAddress;
     bool FlagOfExisting = LoopCmp(refLabel, refTranslator, &index);
-
-    if (FlagOfExisting) {
-        if (refTranslator -> Label_Table[index].addres != kInvalidAddress) {
-            return refTranslator ->Label_Table[index].addres;
-        } else  {
-            SwagPush(&(refTranslator -> Label_Table[index].addreses_uses), Counter_Index + 1);
-            return kInvalidReturnValue;
-        }
-    }
 
     if (!FlagOfExisting) {
         refTranslator->Label_Table[refTranslator -> label_count].name = refLabel;
@@ -252,12 +285,20 @@ ssize_t LabelParserCom(char* refLabel, Translator* refTranslator, size_t Counter
         refTranslator -> label_count++;
         return kInvalidReturnValue;
     }
-    return kInvalidReturnValue;
+
+    if (refTranslator -> Label_Table[index].addres != kInvalidAddress) {
+        return refTranslator ->Label_Table[index].addres;
+    } else  {
+        SwagPush(&(refTranslator -> Label_Table[index].addreses_uses), Counter_Index + 1);
+        return kInvalidReturnValue;
+    }
 }
 
 //=================================================================================================================================================
 
 bool LoopCmp(char const* refLabel, Translator* refTrans, int* index) {
+    assert(refLabel && refTrans && index);
+
     for (int i = 0; i < (int)(sizeof(refTrans -> Label_Table)/sizeof(refTrans->Label_Table[0])); i++) {
         if (!(refTrans -> Label_Table[i].name == NULL) && !strcmp(refLabel, refTrans -> Label_Table[i].name)) {
             *index = i;
@@ -270,6 +311,8 @@ bool LoopCmp(char const* refLabel, Translator* refTrans, int* index) {
 //=================================================================================================================================================
 
 int LabelParser(char* refLabel, Translator* refTranslator, size_t CounterIndex) {
+    assert(refLabel && refTranslator);
+
     int index = -1;
     bool FlagOfExisting = LoopCmp(refLabel, refTranslator, &index);
 
@@ -293,6 +336,8 @@ int LabelParser(char* refLabel, Translator* refTranslator, size_t CounterIndex) 
 //=================================================================================================================================================
 
 transErr_t TranslatorConstructor(Translator* refTranslator, fileInfo* refFileInf, fileInfo* byteCodeFileInf) {
+    assert(refFileInf != NULL && refTranslator != NULL && byteCodeFileInf != NULL);
+
     Plenumation(refFileInf);
     Distributor(refFileInf);
     for (int i = 0; i < LABEL_TABEL_SIZE; i++) {
@@ -311,6 +356,8 @@ transErr_t TranslatorConstructor(Translator* refTranslator, fileInfo* refFileInf
 //=================================================================================================================================================
 
 transErr_t PostProcessor (Translator* refTranslator) {
+    assert(refTranslator);
+
     for (size_t i = 0; i < refTranslator ->label_count; i++) {
         // printf("Labels count: %d\n", refTranslator ->label_count);
         swagElem_t addres = 0;
@@ -345,6 +392,19 @@ void ErrorHandler(transErr_t error_code) {
 
         case kSizeCalculatorError:
             CASE_TEMPLATE_ERROR_HANDLER("Calculation size of bytecode")
+
+        case kBufferFillerError:
+            CASE_TEMPLATE_ERROR_HANDLER("Filling buffer of bytecode")
+
+        case kPostProcessorError:
+            CASE_TEMPLATE_ERROR_HANDLER("Post processing")
+
+        case kFilePrinterError:
+            CASE_TEMPLATE_ERROR_HANDLER("Printing to file")
+
+        case kBinaryPrinterError:
+            CASE_TEMPLATE_ERROR_HANDLER("Printing-binary to file")
+
 
         case NO_TRANS_ERR:
         default:

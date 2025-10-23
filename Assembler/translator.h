@@ -18,13 +18,17 @@
 #define LABLE_SIZE 128
 
 enum transErr_t {
-    NO_TRANS_ERR =         10,
-    OPEN_FILE_ERR =        11,
-    NULL_PTR_TRANSL =      12,
-    kLabelErr =            13,
-    kErrorCom =            14,
-    kPrinterError =        15,
-    kSizeCalculatorError = 16
+    NO_TRANS_ERR         = 10,
+    OPEN_FILE_ERR        = 11,
+    NULL_PTR_TRANSL      = 12,
+    kLabelErr            = 13,
+    kErrorCom            = 14,
+    kPrinterError        = 15,
+    kSizeCalculatorError = 16,
+    kBufferFillerError   = 17,
+    kPostProcessorError  = 18,
+    kFilePrinterError    = 19,
+    kBinaryPrinterError  = 20
 };
 
 typedef struct {
@@ -41,9 +45,9 @@ typedef struct {
     size_t      label_count;
 }Translator;
 
-static const int kTrashValue = -666;
 static const int kInvalidAddress = -1;
 static const int kInvalidReturnValue = -1;
+static const char kLabelMarker = ':';
 
 
 //=================================================================================================================================================
@@ -54,8 +58,10 @@ int regFinder (char* refLine);
 int argFinder (char* refLine);
 char* labelFinder(char* refLine);
 void ErrorHandler(transErr_t error_code);
-transErr_t FilePrinter(Translator* translator, FILE* printable_file);
+transErr_t FilePrinter(Translator* translator);
 transErr_t SizeCalculator(Translator* translator, size_t* calculated_size);
+bool TwoArgument(int comand);
+transErr_t BufferFiller(Translator* translator);
 
 //Functions for work with labels
 transErr_t TranslatorConstructor(Translator* refTranslator, fileInfo* refFileInf, fileInfo* byteCodeFileInf);
