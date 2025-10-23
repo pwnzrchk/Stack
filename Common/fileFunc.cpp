@@ -11,6 +11,7 @@ long long FileSize(FILE* refFile) {
 
 fileFunErr_t Plenumation(fileInfo* refFileArch) {
     assert(refFileArch -> file_name != NULL);
+    
     FILE* file = fopen(refFileArch -> file_name, "r");
     if (!file) {
         fprintf(stderr, "Open file ERR in plenumation, in file %s\n", refFileArch -> file_name);

@@ -41,6 +41,7 @@ typedef struct {
     int*        Buffer_Arr;
     fileInfo    AsmFile;
     fileInfo    ByteCodeFile;
+    fileInfo    binary_file;
     Label_info  Label_Table[LABEL_TABEL_SIZE];
     size_t      label_count;
 }Translator;
@@ -48,27 +49,28 @@ typedef struct {
 static const int kInvalidAddress = -1;
 static const int kInvalidReturnValue = -1;
 static const char kLabelMarker = ':';
+static const char kCommentMarker = ';';
 
 
 //=================================================================================================================================================
 //Parsing functions for bytecoder
-transErr_t ByteCoder(Translator* refTranslator);
-int funcFinder (char* refLine);
-int regFinder (char* refLine);
-int argFinder (char* refLine);
-char* labelFinder(char* refLine);
-void ErrorHandler(transErr_t error_code);
-transErr_t FilePrinter(Translator* translator);
-transErr_t SizeCalculator(Translator* translator, size_t* calculated_size);
-bool TwoArgument(int comand);
-transErr_t BufferFiller(Translator* translator);
+transErr_t ByteCoder      (Translator* refTranslator);
+int funcFinder            (char* refLine);
+int regFinder             (char* refLine);
+int argFinder             (char* refLine);
+char* labelFinder         (char* refLine);
+void ErrorHandler         (transErr_t error_code);
+transErr_t FilePrinter    (Translator* translator);
+transErr_t SizeCalculator (Translator* translator, size_t* calculated_size);
+bool NeedArgument         (int cmd);
+transErr_t BufferFiller   (Translator* translator);
 
 //Functions for work with labels
-transErr_t TranslatorConstructor(Translator* refTranslator, fileInfo* refFileInf, fileInfo* byteCodeFileInf);
-ssize_t LabelParserCom(char* refLabel, Translator* refTranslator, size_t Counter_Index);
-int LabelParser(char* refLabel, Translator* refTranslator, size_t CounterIndex);
-bool LoopCmp(char const* refLabel, Translator* refTrans, int* index);
-transErr_t PostProcessor (Translator* refTranslator);
+transErr_t TranslatorConstructor (Translator* refTranslator, fileInfo* refFileInf, fileInfo* byteCodeFileInf);
+ssize_t LabelParserCom           (char* refLabel, Translator* refTranslator, size_t Counter_Index);
+int LabelParser                  (char* refLabel, Translator* refTranslator, size_t CounterIndex);
+bool LoopCmp                     (char const* refLabel, Translator* refTrans, int* index);
+transErr_t PostProcessor         (Translator* refTranslator);
 
 
 #endif //translator_h

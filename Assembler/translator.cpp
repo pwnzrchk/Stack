@@ -2,9 +2,10 @@
 
 
 #define JMP_TMPL    if (offset_for_label != NULL) {                                                                             \
-                    ssize_t flag_of_existing = 0;                                                                                   \
+                    ssize_t flag_of_existing = 0;                                                                               \
                         if ((flag_of_existing = LabelParserCom(LabelName, refTranslator, counterIndex)) != kInvalidAddress) {   \
-                            refTranslator -> Buffer_Arr[counterIndex++] = (int)flag_of_existing;                                     \
+                            refTranslator -> Buffer_Arr[counterIndex++] = (int)flag_of_existing;                                \
+                            break;                                                                                              \
                         } else {                                                                                                \
                             refTranslator -> Buffer_Arr[counterIndex++] = kTrashValue;                                          \
                         }                                                                                                       \
@@ -58,7 +59,8 @@ transErr_t BufferFiller(Translator* refTranslator) {
 
         char* workline = refTranslator->AsmFile.pointerBuffer[i];
         if (!workline) break;
-        if(workline[0] == '\0' || workline[0] == '\n') continue;
+        if(workline[0] == '\0' || workline[0] == '\n' || workline[0] == ';') continue;
+        // void CommentFinder(workline);
 
         int comand = funcFinder(workline);
         int reg = ERROR_REG;
@@ -71,7 +73,7 @@ transErr_t BufferFiller(Translator* refTranslator) {
             LabelName = labelFinder(offset_for_label + 1);
         }
 
-        //ОТЛАДОЧНАЯ - fprintf(stderr, "[%zu] - %d\n", i, comaxnd);
+        //DEBUG - fprintf(stderr, "[%zu] - %d\n", i, comaxnd);
 
         switch (comand) {
             case PUSH:
@@ -124,7 +126,17 @@ transErr_t BufferFiller(Translator* refTranslator) {
 
 //=================================================================================================================================================
 
-// transErr_t FilePrinter(Translator* translator, FILE* printable_file)
+transErr_t BinaryPrinter(Translator* translator) {
+    
+    return NO_TRANS_ERR;
+}
+
+//=================================================================================================================================================
+
+// void CommentFinder(char* workline) {
+//     char* offset_for_comment = strchr(workline, kCommentMarker);
+//
+// }
 
 //=================================================================================================================================================
 
@@ -133,13 +145,15 @@ transErr_t FilePrinter(Translator* translator) {
 
     size_t memory_size = (size_t)kTrashValue;
     if (SizeCalculator(translator, &memory_size) != NO_TRANS_ERR) return kSizeCalculatorError;
-    //ОТЛАДОЧНАЯ
-    fprintf(stderr, "Memory size = %zu\n", memory_size);
+    //DEBUG
+    // fprintf(stderr, "Memory size = %zu\n", memory_size);
 
     FILE* printable_file = fopen(translator->ByteCodeFile.file_name, "w");
     if (!printable_file) return NULL_PTR_TRANSL;
 
     int* template_buffer = (int*)calloc(memory_size, sizeof(int));
+    // int* template_buffer = (int*)malloc(memory_size*sizeof(int));
+
     if (template_buffer == NULL) {
         fprintf(stderr, "Callc error for template buffer in FilePrinter\n");
         return NULL_PTR_TRANSL;
@@ -147,8 +161,8 @@ transErr_t FilePrinter(Translator* translator) {
     memcpy(template_buffer, translator->Buffer_Arr, memory_size * sizeof(int));
     free(translator->Buffer_Arr);
     translator->Buffer_Arr = template_buffer;
-    
-    //ОТЛАДОЧНАЯ
+
+    //DEBUG
     // printf("Memory size = %zu\n", memory_size);
 
     for (size_t i = 0; i < memory_size; i++) {
@@ -156,7 +170,7 @@ transErr_t FilePrinter(Translator* translator) {
         // printf("[%zu] %d\n", i, translator->Buffer_Arr[i]);
 
         int cmd = translator->Buffer_Arr[i];
-        if (!TwoArgument(cmd))
+        if (!NeedArgument(cmd))
             fprintf(printable_file, "\n");
         else
             fprintf(printable_file, " %d\n", translator->Buffer_Arr[++i]);
@@ -167,14 +181,15 @@ transErr_t FilePrinter(Translator* translator) {
 
 //=================================================================================================================================================
 
-bool TwoArgument(int cmd) {
-    if (cmd == POP || cmd == SUM || cmd == SUB || cmd == MUL || cmd == DIV || cmd == DUMP || cmd == HLT || cmd == RET || cmd == DRAW) return true;
-    return false;
+bool NeedArgument(int cmd) {
+    return !(cmd == POP || cmd == SUM || cmd == SUB || cmd == MUL|| cmd == DIV
+            || cmd == DUMP || cmd == HLT || cmd == RET || cmd == DRAW);
 }
 
 //=================================================================================================================================================
 
 transErr_t SizeCalculator(Translator* translator, size_t* calculated_size) {
+    assert(translator && calculated_size);
 
     size_t original_size = kBufferMultiplier * (translator->AsmFile.str_count - 1);
     size_t memory_size = 0;
@@ -244,7 +259,7 @@ int funcFinder (char* refLine) {
 int argFinder (char* refLine) {
     assert(refLine);
 
-    //ОТЛАДОЧНАЯ  if (refLine == NULL) return kTrashValue;
+    //DEBUG  if (refLine == NULL) return kTrashValue;
     int arg = kTrashValue;
     if (sscanf(refLine, "%*s %d", &arg) == 1) {
         return arg;
@@ -281,7 +296,7 @@ ssize_t LabelParserCom(char* refLabel, Translator* refTranslator, size_t Counter
         refTranslator->Label_Table[refTranslator -> label_count].addres = kInvalidAddress;
 
         SwagInit(&refTranslator->Label_Table[refTranslator -> label_count].addreses_uses, SizeOfAddrUsesStack);
-        SwagPush(&(refTranslator -> Label_Table[refTranslator -> label_count].addreses_uses), Counter_Index + 1);
+        SwagPush(&(refTranslator -> Label_Table[refTranslator -> label_count].addreses_uses), Counter_Index);   //WARNING
         refTranslator -> label_count++;
         return kInvalidReturnValue;
     }
@@ -289,7 +304,7 @@ ssize_t LabelParserCom(char* refLabel, Translator* refTranslator, size_t Counter
     if (refTranslator -> Label_Table[index].addres != kInvalidAddress) {
         return refTranslator ->Label_Table[index].addres;
     } else  {
-        SwagPush(&(refTranslator -> Label_Table[index].addreses_uses), Counter_Index + 1);
+        SwagPush(&(refTranslator -> Label_Table[index].addreses_uses), Counter_Index);                          //WARNING - -1 CountexIndex
         return kInvalidReturnValue;
     }
 }
@@ -359,13 +374,13 @@ transErr_t PostProcessor (Translator* refTranslator) {
     assert(refTranslator);
 
     for (size_t i = 0; i < refTranslator ->label_count; i++) {
-        // printf("Labels count: %d\n", refTranslator ->label_count);
+        printf("Label %d\n", i);
         swagElem_t addres = 0;
         size_t Addresse_used_Size = refTranslator->Label_Table[i].addreses_uses.size;
-        // printf("Addresse_used_Size is %zu\n", Addresse_used_Size);
+        printf("Addresse_used_Size is %zu\n", Addresse_used_Size);
         for (size_t k = 0; k < Addresse_used_Size; k++) {
             SwagPop(&refTranslator->Label_Table[i].addreses_uses, &addres);
-            refTranslator->Buffer_Arr[addres] = (int)refTranslator->Label_Table[i].addres;
+            refTranslator->Buffer_Arr[addres] = (int)refTranslator->Label_Table[i].addres;  //WARNING -1
         }
     }
     return NO_TRANS_ERR;
