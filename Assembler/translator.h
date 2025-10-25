@@ -28,7 +28,8 @@ enum transErr_t {
     kBufferFillerError   = 17,
     kPostProcessorError  = 18,
     kFilePrinterError    = 19,
-    kBinaryPrinterError  = 20
+    kBinaryPrinterError  = 20,
+    kSizeError           = 21
 };
 
 typedef struct {
@@ -64,6 +65,7 @@ transErr_t FilePrinter    (Translator* translator);
 transErr_t SizeCalculator (Translator* translator, size_t* calculated_size);
 bool NeedArgument         (int cmd);
 transErr_t BufferFiller   (Translator* translator);
+transErr_t BinaryPrinter  (Translator* translator);
 
 //Functions for work with labels
 transErr_t TranslatorConstructor (Translator* refTranslator, fileInfo* refFileInf, fileInfo* byteCodeFileInf);

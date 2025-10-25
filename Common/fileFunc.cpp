@@ -1,17 +1,11 @@
 #include "fileFunc.h"
 
 
-long long FileSize(FILE* refFile) {
-    struct stat fileFeature;
-    fstat(fileno(refFile), &fileFeature);
-    return fileFeature.st_size;
-}
-
 //=================================================================================================================================================
 
 fileFunErr_t Plenumation(fileInfo* refFileArch) {
     assert(refFileArch -> file_name != NULL);
-    
+
     FILE* file = fopen(refFileArch -> file_name, "r");
     if (!file) {
         fprintf(stderr, "Open file ERR in plenumation, in file %s\n", refFileArch -> file_name);
@@ -67,5 +61,12 @@ fileFunErr_t Distributor(fileInfo* refFileArch) {
     return NO_PLUM_ERR;
 }
 
+//=================================================================================================================================================
 
+long FileSize(FILE* file) {
+    struct stat file_info;
+    if (fstat(fileno(file), &file_info) != 0) return -1;
+    return file_info.st_size;
+}
 
+//=================================================================================================================================================

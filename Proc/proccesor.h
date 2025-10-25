@@ -41,6 +41,7 @@ enum ProcErr_t {
     kPushMemoryError   = 16,
     kPopMemoryError    = 17,
     kSpuDestroyError   = 18,
+    kErrorSize         = 19,
     UNKNW_CMD          = 99,
     INCORECT_SIZE      = 100
 };

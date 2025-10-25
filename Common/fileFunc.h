@@ -27,9 +27,9 @@ typedef struct{
  }fileInfo;
 
 
-long long FileSize(FILE* refFile);
 fileFunErr_t Plenumation(fileInfo* refFileArch);
 fileFunErr_t Distributor(fileInfo* refFileArch);
+long FileSize           (FILE* file);
 
 
 #endif  //fileFunc_h

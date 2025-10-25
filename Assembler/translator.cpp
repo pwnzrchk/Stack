@@ -34,7 +34,7 @@
 transErr_t  ByteCoder(Translator* refTranslator) {
     if (BufferFiller(refTranslator) != NO_TRANS_ERR)  return kBufferFillerError;
     if (PostProcessor(refTranslator) != NO_TRANS_ERR) return kPostProcessorError;
-    if (FilePrinter(refTranslator) != NO_TRANS_ERR)   return kFilePrinterError;
+    if (BinaryPrinter(refTranslator) != NO_TRANS_ERR) return kBinaryPrinterError;
     return NO_TRANS_ERR;
 }
 
@@ -73,7 +73,8 @@ transErr_t BufferFiller(Translator* refTranslator) {
             LabelName = labelFinder(offset_for_label + 1);
         }
 
-        //DEBUG - fprintf(stderr, "[%zu] - %d\n", i, comaxnd);
+        //DEBUG
+        // fprintf(stderr, "[%zu] - %d\n", i, comand);
 
         switch (comand) {
             case PUSH:
@@ -127,7 +128,36 @@ transErr_t BufferFiller(Translator* refTranslator) {
 //=================================================================================================================================================
 
 transErr_t BinaryPrinter(Translator* translator) {
-    
+    assert(translator != NULL);
+
+    size_t memory_size = (size_t)kTrashValue;
+    if (SizeCalculator(translator, &memory_size) != NO_TRANS_ERR) return kBinaryPrinterError;
+
+    //DEBUG
+    // fprintf(stderr, "Memory size = %zu\n", memory_size);
+
+    FILE* binary_file = fopen(translator->binary_file.file_name, "wb");
+    if (!binary_file) return NULL_PTR_TRANSL;
+
+    int* template_buffer = (int*)calloc(memory_size, sizeof(int));
+    if (template_buffer == NULL) {
+        fprintf(stderr, "Calloc error for template buffer in BinaryPrinter\n");
+        return NULL_PTR_TRANSL;
+    }
+
+    memcpy(template_buffer, translator->Buffer_Arr, memory_size * sizeof(int));
+    free(translator->Buffer_Arr);
+    translator->Buffer_Arr = template_buffer;
+
+    //DEBUG
+    // for (size_t i = 0; i < memory_size; i++) {
+        // fprintf(stderr, "[%d] - %d\n", i, translator->Buffer_Arr[i]);
+    // }
+
+    size_t recorded_values = fwrite(translator->Buffer_Arr, sizeof(int), memory_size, binary_file);
+    fclose(binary_file);
+    if (recorded_values != memory_size) return kSizeError;
+
     return NO_TRANS_ERR;
 }
 
@@ -139,45 +169,46 @@ transErr_t BinaryPrinter(Translator* translator) {
 // }
 
 //=================================================================================================================================================
-
-transErr_t FilePrinter(Translator* translator) {
-    assert(translator != NULL);
-
-    size_t memory_size = (size_t)kTrashValue;
-    if (SizeCalculator(translator, &memory_size) != NO_TRANS_ERR) return kSizeCalculatorError;
-    //DEBUG
-    // fprintf(stderr, "Memory size = %zu\n", memory_size);
-
-    FILE* printable_file = fopen(translator->ByteCodeFile.file_name, "w");
-    if (!printable_file) return NULL_PTR_TRANSL;
-
-    int* template_buffer = (int*)calloc(memory_size, sizeof(int));
-    // int* template_buffer = (int*)malloc(memory_size*sizeof(int));
-
-    if (template_buffer == NULL) {
-        fprintf(stderr, "Callc error for template buffer in FilePrinter\n");
-        return NULL_PTR_TRANSL;
-    }
-    memcpy(template_buffer, translator->Buffer_Arr, memory_size * sizeof(int));
-    free(translator->Buffer_Arr);
-    translator->Buffer_Arr = template_buffer;
-
-    //DEBUG
-    // printf("Memory size = %zu\n", memory_size);
-
-    for (size_t i = 0; i < memory_size; i++) {
-        fprintf(printable_file, "%d", translator->Buffer_Arr[i]);
-        // printf("[%zu] %d\n", i, translator->Buffer_Arr[i]);
-
-        int cmd = translator->Buffer_Arr[i];
-        if (!NeedArgument(cmd))
-            fprintf(printable_file, "\n");
-        else
-            fprintf(printable_file, " %d\n", translator->Buffer_Arr[++i]);
-    }
-    fclose(printable_file);
-    return NO_TRANS_ERR;
-}
+//DRAFT
+// transErr_t FilePrinter(Translator* translator) {
+//     assert(translator != NULL);
+//
+//     size_t memory_size = (size_t)kTrashValue;
+//     if (SizeCalculator(translator, &memory_size) != NO_TRANS_ERR) return kSizeCalculatorError;
+//
+//     //DEBUG
+//     // fprintf(stderr, "Memory size = %zu\n", memory_size);
+//
+//     FILE* printable_file = fopen(translator->ByteCodeFile.file_name, "w");
+//     if (!printable_file) return NULL_PTR_TRANSL;
+//
+//     int* template_buffer = (int*)calloc(memory_size, sizeof(int));
+//     // int* template_buffer = (int*)malloc(memory_size*sizeof(int));
+//
+//     if (template_buffer == NULL) {
+//         fprintf(stderr, "Callc error for template buffer in FilePrinter\n");
+//         return NULL_PTR_TRANSL;
+//     }
+//     memcpy(template_buffer, translator->Buffer_Arr, memory_size * sizeof(int));
+//     free(translator->Buffer_Arr);
+//     translator->Buffer_Arr = template_buffer;
+//
+//     //DEBUG
+//     // printf("Memory size = %zu\n", memory_size);
+//
+//     for (size_t i = 0; i < memory_size; i++) {
+//         fprintf(printable_file, "%d", translator->Buffer_Arr[i]);
+//         // printf("[%zu] %d\n", i, translator->Buffer_Arr[i]);
+//
+//         int cmd = translator->Buffer_Arr[i];
+//         if (!NeedArgument(cmd))
+//             fprintf(printable_file, "\n");
+//         else
+//             fprintf(printable_file, " %d\n", translator->Buffer_Arr[++i]);
+//     }
+//     fclose(printable_file);
+//     return NO_TRANS_ERR;
+// }
 
 //=================================================================================================================================================
 
@@ -363,7 +394,7 @@ transErr_t TranslatorConstructor(Translator* refTranslator, fileInfo* refFileInf
 
     refTranslator -> Buffer_Arr = NULL;
     refTranslator -> AsmFile = *refFileInf;
-    refTranslator -> ByteCodeFile = *byteCodeFileInf;
+    refTranslator -> binary_file = *byteCodeFileInf;
     refTranslator -> label_count = 0;
     return NO_TRANS_ERR;
 }
@@ -374,13 +405,16 @@ transErr_t PostProcessor (Translator* refTranslator) {
     assert(refTranslator);
 
     for (size_t i = 0; i < refTranslator ->label_count; i++) {
-        printf("Label %d\n", i);
+        //DEBUG printf("Label %d\n", i);
         swagElem_t addres = 0;
         size_t Addresse_used_Size = refTranslator->Label_Table[i].addreses_uses.size;
-        printf("Addresse_used_Size is %zu\n", Addresse_used_Size);
+
+        //DEBUG
+        // printf("Addresse_used_Size is %zu\n", Addresse_used_Size);
+
         for (size_t k = 0; k < Addresse_used_Size; k++) {
             SwagPop(&refTranslator->Label_Table[i].addreses_uses, &addres);
-            refTranslator->Buffer_Arr[addres] = (int)refTranslator->Label_Table[i].addres;  //WARNING -1
+            refTranslator->Buffer_Arr[addres] = (int)refTranslator->Label_Table[i].addres;
         }
     }
     return NO_TRANS_ERR;
@@ -418,7 +452,10 @@ void ErrorHandler(transErr_t error_code) {
             CASE_TEMPLATE_ERROR_HANDLER("Printing to file")
 
         case kBinaryPrinterError:
-            CASE_TEMPLATE_ERROR_HANDLER("Printing-binary to file")
+            CASE_TEMPLATE_ERROR_HANDLER("Printing binary to file")
+
+        case kSizeError:
+            CASE_TEMPLATE_ERROR_HANDLER("Size error in binary")
 
 
         case NO_TRANS_ERR:

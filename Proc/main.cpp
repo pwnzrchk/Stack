@@ -7,10 +7,10 @@
 
 
 int main(void) {
-    fileInfo byteCodeFile = {"src/byteCode.txt", 0, 0, NULL, NULL};
+    fileInfo binary_file  = {"src/binary.bin", 0, 0, NULL, NULL};
     spu_t main_spu = {};
 
-    SpuConstructor(&main_spu, &byteCodeFile);
+    SpuConstructor(&main_spu, &binary_file);
     ProcErr_t code_error = WITHOUT_ERRS;
     if ((code_error = Proccesing(&main_spu)) != WITHOUT_ERRS) {
         ErrorHandler(code_error);

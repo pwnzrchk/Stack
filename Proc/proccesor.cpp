@@ -246,9 +246,8 @@ ProcErr_t MemoryCalculator(fileInfo* reference_byte_code_file, size_t* calculate
 
 //=================================================================================================================================================
 
-ProcErr_t SpuConstructor(spu_t* refSpu, fileInfo* refBCFile) {
-    assert(refBCFile != NULL);
-    assert(refSpu != NULL);
+ProcErr_t SpuConstructor(spu_t* refSpu, fileInfo* binary_file) {
+    assert(binary_file != NULL && refSpu != NULL);
 
     swag_t SpuSwag = {};
     SwagInit(&SpuSwag, kInitialSize);
@@ -257,12 +256,24 @@ ProcErr_t SpuConstructor(spu_t* refSpu, fileInfo* refBCFile) {
     }
 
     refSpu -> Swag = SpuSwag;
-    BCFileToArr(refBCFile, &(refSpu -> ByteCodeBuf));
+    // BCFileToArr(refBCFile, &(refSpu -> ByteCodeBuf));
     refSpu -> pc = 0;
 
     swag_t spu_return_stack = {};
     SwagInit(&spu_return_stack, kReturnAddressesStackSize);
     refSpu->stack_return_addresses = spu_return_stack;
+
+    FILE* binary = fopen(binary_file->file_name, "rb");
+    if (binary == NULL) return NULL_PTR_ERR;
+    long bytes_count = FileSize(binary);
+    if (bytes_count == -1) return kErrorSize;
+    size_t memory_size = (size_t)bytes_count/sizeof(int);
+
+    //DEBUG
+    fprintf(stderr, "memory size - [%zu]\n", memory_size);
+
+    size_t read_count = fread(refSpu->ByteCodeBuf, sizeof(int), memory_size, binary);
+
 
     refSpu->ram = (swagElem_t*)calloc(kSizeOfRam, sizeof(swagElem_t));
 
