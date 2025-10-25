@@ -151,7 +151,7 @@ transErr_t BinaryPrinter(Translator* translator) {
 
     //DEBUG
     // for (size_t i = 0; i < memory_size; i++) {
-        // fprintf(stderr, "[%d] - %d\n", i, translator->Buffer_Arr[i]);
+    //     fprintf(stderr, "[%d] - %d\n", i, translator->Buffer_Arr[i]);
     // }
 
     size_t recorded_values = fwrite(translator->Buffer_Arr, sizeof(int), memory_size, binary_file);

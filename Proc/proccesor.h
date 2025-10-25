@@ -16,7 +16,8 @@ const int kSizeOfRam = 100;
 
 typedef struct {
     swag_t      Swag;
-    swagElem_t* ByteCodeBuf;
+    int*        ByteCodeBuf;
+    int         size_of_bytecode_buffer;
     size_t      pc;
     swagElem_t  regs[kRegistersAmount];
     swag_t      stack_return_addresses;

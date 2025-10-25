@@ -49,22 +49,26 @@ ProcErr_t Proccesing(spu_t* refSpu) {
 
     if (refSpu -> ByteCodeBuf == NULL)  return  NULL_PTR_ERR;
     if ((refSpu -> regs) == NULL)       return  NULL_PTR_ERR;
-    if(refSpu -> Swag.data == NULL)     return  NULL_PTR_ERR;
+    if (refSpu -> Swag.data == NULL)    return  NULL_PTR_ERR;
 
-    bool FlagOfExit =           false;
-    swagErr_t error =           NO_ERRS;
-    ProcErr_t Proc_err =        WITHOUT_ERRS;
-    swagElem_t BC_Buffer_Size = refSpu -> ByteCodeBuf[0];
+    bool       FlagOfExit     = false;
+    swagErr_t  error          = NO_ERRS;
+    ProcErr_t  Proc_err       = WITHOUT_ERRS;
+    swagElem_t BC_Buffer_Size = refSpu->size_of_bytecode_buffer;
 
     for(refSpu -> pc = 0; refSpu -> pc < BC_Buffer_Size && !FlagOfExit;) {
-        const swagElem_t comand = refSpu -> ByteCodeBuf[(++refSpu ->pc)];
+        const swagElem_t comand = refSpu -> ByteCodeBuf[refSpu ->pc];
         swagElem_t arg = 0;
+
+        //DEBUG -
+        fprintf(stderr, "%zu Comand in buffer-byte-code is - [%d]\n", refSpu->pc, refSpu -> ByteCodeBuf[(refSpu ->pc)]);
+        if (refSpu->pc + 1 == refSpu->size_of_bytecode_buffer) return kErrorSize;
+
         if (!comand) {
             fprintf(stderr, "Null comand pointer in %zu ell in ARR\n", refSpu -> ByteCodeBuf[refSpu ->pc] + 1);
             return NULL_PTR_ERR;
         }
         // ErrorHandler - функция для обработки ошибок (принимает номер ошибки и выводит сообщение)
-        //ОТЛАДКА - printf("Comand: %zu\n", comand);
         switch(comand) {
             case PUSH:
                 if ((error = SwagPush(&(SwagAdr), refSpu -> ByteCodeBuf[++(refSpu ->pc)])) != NO_ERRS) {
@@ -251,12 +255,11 @@ ProcErr_t SpuConstructor(spu_t* refSpu, fileInfo* binary_file) {
 
     swag_t SpuSwag = {};
     SwagInit(&SpuSwag, kInitialSize);
+    refSpu -> Swag = SpuSwag;
+
     for (int i = 0; i < kRegistersAmount; i++) {
         refSpu -> regs[i] = 0;
     }
-
-    refSpu -> Swag = SpuSwag;
-    // BCFileToArr(refBCFile, &(refSpu -> ByteCodeBuf));
     refSpu -> pc = 0;
 
     swag_t spu_return_stack = {};
@@ -265,6 +268,7 @@ ProcErr_t SpuConstructor(spu_t* refSpu, fileInfo* binary_file) {
 
     FILE* binary = fopen(binary_file->file_name, "rb");
     if (binary == NULL) return NULL_PTR_ERR;
+
     long bytes_count = FileSize(binary);
     if (bytes_count == -1) return kErrorSize;
     size_t memory_size = (size_t)bytes_count/sizeof(int);
@@ -272,11 +276,19 @@ ProcErr_t SpuConstructor(spu_t* refSpu, fileInfo* binary_file) {
     //DEBUG
     fprintf(stderr, "memory size - [%zu]\n", memory_size);
 
-    size_t read_count = fread(refSpu->ByteCodeBuf, sizeof(int), memory_size, binary);
+    refSpu->ByteCodeBuf = (int*)calloc(memory_size, sizeof(int));
 
+    ssize_t read_count = (ssize_t)fread(refSpu->ByteCodeBuf, sizeof(int), memory_size, binary);
+    fclose(binary);
+    if (bytes_count % sizeof(int) != 0) return INCORECT_SIZE;
+    refSpu->size_of_bytecode_buffer = memory_size;
 
-    refSpu->ram = (swagElem_t*)calloc(kSizeOfRam, sizeof(swagElem_t));
+    //DEBUG
+    for (int i = 0; i < memory_size; i++) {
+        fprintf(stderr, "%d element in buffer is - [%d]\n", i, refSpu->ByteCodeBuf[i]);
+    }
 
+    refSpu->ram = (swagElem_t*) calloc(kSizeOfRam, sizeof(swagElem_t));
     return WITHOUT_ERRS;
 }
 
