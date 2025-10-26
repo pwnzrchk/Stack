@@ -77,4 +77,4 @@ bool LoopCmp                     (char const* refLabel, Translator* refTrans, in
 transErr_t PostProcessor         (Translator* refTranslator);
 
 
-#endif //translator_h
+#endif // translator_h
