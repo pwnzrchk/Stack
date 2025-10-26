@@ -73,9 +73,6 @@ transErr_t BufferFiller(Translator* refTranslator) {
             LabelName = labelFinder(offset_for_label + 1);
         }
 
-        //DEBUG
-        // fprintf(stderr, "[%zu] - %d\n", i, comand);
-
         switch (comand) {
             case PUSH:
                 refTranslator -> Buffer_Arr[counterIndex++] = comand;
@@ -133,9 +130,6 @@ transErr_t BinaryPrinter(Translator* translator) {
     size_t memory_size = (size_t)kTrashValue;
     if (SizeCalculator(translator, &memory_size) != NO_TRANS_ERR) return kBinaryPrinterError;
 
-    //DEBUG
-    // fprintf(stderr, "Memory size = %zu\n", memory_size);
-
     FILE* binary_file = fopen(translator->binary_file.file_name, "wb");
     if (!binary_file) return NULL_PTR_TRANSL;
 
@@ -148,11 +142,6 @@ transErr_t BinaryPrinter(Translator* translator) {
     memcpy(template_buffer, translator->Buffer_Arr, memory_size * sizeof(int));
     free(translator->Buffer_Arr);
     translator->Buffer_Arr = template_buffer;
-
-    //DEBUG
-    // for (size_t i = 0; i < memory_size; i++) {
-    //     fprintf(stderr, "[%d] - %d\n", i, translator->Buffer_Arr[i]);
-    // }
 
     size_t recorded_values = fwrite(translator->Buffer_Arr, sizeof(int), memory_size, binary_file);
     fclose(binary_file);
@@ -290,7 +279,7 @@ int funcFinder (char* refLine) {
 int argFinder (char* refLine) {
     assert(refLine);
 
-    //DEBUG  if (refLine == NULL) return kTrashValue;
+    if (refLine == NULL) return kTrashValue;
     int arg = kTrashValue;
     if (sscanf(refLine, "%*s %d", &arg) == 1) {
         return arg;
@@ -405,12 +394,8 @@ transErr_t PostProcessor (Translator* refTranslator) {
     assert(refTranslator);
 
     for (size_t i = 0; i < refTranslator ->label_count; i++) {
-        //DEBUG printf("Label %d\n", i);
         swagElem_t addres = 0;
         size_t Addresse_used_Size = refTranslator->Label_Table[i].addreses_uses.size;
-
-        //DEBUG
-        // printf("Addresse_used_Size is %zu\n", Addresse_used_Size);
 
         for (size_t k = 0; k < Addresse_used_Size; k++) {
             SwagPop(&refTranslator->Label_Table[i].addreses_uses, &addres);

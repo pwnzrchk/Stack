@@ -44,6 +44,10 @@
 
 //=================================================================================================================================================
 
+//=================================================================================================================================================
+
+//=================================================================================================================================================
+
 ProcErr_t Proccesing(spu_t* refSpu) {
     assert((refSpu != NULL) && (refSpu->ByteCodeBuf != NULL) && (refSpu->regs != NULL) && (refSpu->Swag.data != NULL));
 
@@ -56,20 +60,10 @@ ProcErr_t Proccesing(spu_t* refSpu) {
     ProcErr_t  Proc_err       = WITHOUT_ERRS;
     swagElem_t BC_Buffer_Size = refSpu->size_of_bytecode_buffer;
 
-    //DEBUG
-    fprintf(stderr, "Size of buffer for bytecode: %d\n", refSpu->size_of_bytecode_buffer);
-
     for(refSpu -> pc = 0; refSpu -> pc < BC_Buffer_Size && !FlagOfExit;) {
-
-        //DEBUG -
-        fprintf(stderr, "%zu Comand in buffer-byte-code is - [%d]\n", refSpu->pc, refSpu -> ByteCodeBuf[(refSpu ->pc)]);
 
         const swagElem_t comand = refSpu -> ByteCodeBuf[refSpu ->pc++];
         swagElem_t arg = 0;
-
-        //DEBUG -
-        // if (refSpu->pc + 1 == BC_Buffer_Size) return kErrorSize;
-
 
         if (!comand) {
             fprintf(stderr, "Null comand pointer in %zu ell in ARR\n", refSpu -> ByteCodeBuf[refSpu ->pc]);
@@ -173,7 +167,7 @@ ProcErr_t Proccesing(spu_t* refSpu) {
 }
 
 //=================================================================================================================================================
-//DRAFT -
+//DRAFT
 // fileFunErr_t BCFileToArr(fileInfo* refBCFile, swagElem_t** refArr) {
 //     assert(refArr != NULL);
 //
@@ -280,20 +274,12 @@ ProcErr_t SpuConstructor(spu_t* refSpu, fileInfo* binary_file) {
     if (bytes_count == -1) return kErrorSize;
     size_t memory_size = (size_t)bytes_count/sizeof(int);
 
-    //DEBUG
-    fprintf(stderr, "memory size - [%zu]\n", memory_size);
-
     refSpu->ByteCodeBuf = (int*)calloc(memory_size, sizeof(int));
 
     ssize_t read_count = (ssize_t)fread(refSpu->ByteCodeBuf, sizeof(int), memory_size, binary);
     fclose(binary);
     if (bytes_count % sizeof(int) != 0 || read_count != memory_size) return INCORECT_SIZE;
     refSpu->size_of_bytecode_buffer = memory_size;
-
-    //DEBUG
-    // for (int i = 0; i < memory_size; i++) {
-    //     fprintf(stderr, "%d element in buffer is - [%d]\n", i, refSpu->ByteCodeBuf[i]);
-    // }
 
     refSpu->ram = (swagElem_t*) calloc(kSizeOfRam, sizeof(swagElem_t));
     return WITHOUT_ERRS;
@@ -417,7 +403,7 @@ void ErrorHandler(int error_code) {
             CASE_TEMPLATE_ERROR_HANDLER(Call)
 
         case kErrorSize:
-            CASE_TEMPLATE_ERROR_HANDLER(ErrorSize_in_)
+            CASE_TEMPLATE_ERROR_HANDLER(ErrorSize_in_processing)
 
         default:
             fprintf(stderr, "ErrorHandler mistake");
@@ -425,7 +411,7 @@ void ErrorHandler(int error_code) {
 }
 
 //=================================================================================================================================================
-//Ассерты
+
 ProcErr_t CallFunction(spu_t* spu, size_t new_pc) {
     assert(spu);
 
@@ -435,7 +421,7 @@ ProcErr_t CallFunction(spu_t* spu, size_t new_pc) {
 }
 
 //=================================================================================================================================================
-//Ассерты
+
 ProcErr_t RetFunction(spu_t* spu) {
     assert(spu);
 
@@ -473,9 +459,11 @@ ProcErr_t DrawMemory(spu_t* spu) {
     assert(spu);
 
     for (int i = 0; i < kSizeOfRam; i++) {
-        printf("%c", spu->ram[i]);
-        if (i%10 == 9) printf("\n"); // FIXME - 10?
+        unsigned char symbol = (unsigned char)(spu->ram[i] & 0xFF);
+        printf("%c", symbol ? symbol : ' '); // если 0 — печатать пробел
+        if (i % 10 == 9) printf("\n");
     }
+
     return WITHOUT_ERRS;
 }
 
@@ -503,8 +491,3 @@ ProcErr_t SpuDestroyer(spu_t* spu) {
 #undef REPLACEMENT
 #undef JMP_TEMPLATE
 #undef JMP_TEMP_CASE
-
-// ProcErr_t SpuDump(spu_t* refSpu) {
-    // printf();
-// }
-//

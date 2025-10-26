@@ -10,6 +10,7 @@
 #include "../Common/swags.h"
 #include "../Common/commands.h"
 
+//=================================================================================================================================================
 
 const int kInitialSize = 55;
 const int kSizeOfRam = 100;
@@ -47,7 +48,7 @@ enum ProcErr_t {
     INCORECT_SIZE      = 100
 };
 
-
+//=================================================================================================================================================
 //General functions
 ProcErr_t Proccesing      (spu_t* refSpu);
 fileFunErr_t BCFileToArr  (fileInfo* refBCFile, swagElem_t** refArr);
