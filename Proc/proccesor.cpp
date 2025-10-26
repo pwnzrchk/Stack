@@ -24,7 +24,7 @@
 
 #define JMP_TEMPLATE(operation)                                                                             \
         assert(refSpu);                                                                                     \
-        if (index < 1 || index >= refSpu->ByteCodeBuf[0]) {                                                 \
+        if (index < 1 || index >= refSpu->size_of_bytecode_buffer) {                                        \
             return INCORECT_SIZE;                                                                           \
         }                                                                                                   \
         swagElem_t compared1, compared2 = 0;                                                                \
@@ -37,13 +37,13 @@
 //=================================================================================================================================================
 
 #define JMP_TEMP_CASE(jmp_var)                                                                              \
-        if ((Proc_err = jmp_var(refSpu, refSpu -> ByteCodeBuf[++(refSpu -> pc)])) != WITHOUT_ERRS) {        \
+        if ((Proc_err = jmp_var(refSpu, refSpu -> ByteCodeBuf[(refSpu -> pc)++])) != WITHOUT_ERRS) {        \
             return JMP_ERR;                                                                                 \
         }                                                                                                   \
         break;
 
 //=================================================================================================================================================
-// FIXME - asserts
+
 ProcErr_t Proccesing(spu_t* refSpu) {
     assert((refSpu != NULL) && (refSpu->ByteCodeBuf != NULL) && (refSpu->regs != NULL) && (refSpu->Swag.data != NULL));
 
@@ -56,22 +56,29 @@ ProcErr_t Proccesing(spu_t* refSpu) {
     ProcErr_t  Proc_err       = WITHOUT_ERRS;
     swagElem_t BC_Buffer_Size = refSpu->size_of_bytecode_buffer;
 
+    //DEBUG
+    fprintf(stderr, "Size of buffer for bytecode: %d\n", refSpu->size_of_bytecode_buffer);
+
     for(refSpu -> pc = 0; refSpu -> pc < BC_Buffer_Size && !FlagOfExit;) {
-        const swagElem_t comand = refSpu -> ByteCodeBuf[refSpu ->pc];
-        swagElem_t arg = 0;
 
         //DEBUG -
         fprintf(stderr, "%zu Comand in buffer-byte-code is - [%d]\n", refSpu->pc, refSpu -> ByteCodeBuf[(refSpu ->pc)]);
-        if (refSpu->pc + 1 == refSpu->size_of_bytecode_buffer) return kErrorSize;
+
+        const swagElem_t comand = refSpu -> ByteCodeBuf[refSpu ->pc++];
+        swagElem_t arg = 0;
+
+        //DEBUG -
+        // if (refSpu->pc + 1 == BC_Buffer_Size) return kErrorSize;
+
 
         if (!comand) {
-            fprintf(stderr, "Null comand pointer in %zu ell in ARR\n", refSpu -> ByteCodeBuf[refSpu ->pc] + 1);
+            fprintf(stderr, "Null comand pointer in %zu ell in ARR\n", refSpu -> ByteCodeBuf[refSpu ->pc]);
             return NULL_PTR_ERR;
         }
-        // ErrorHandler - функция для обработки ошибок (принимает номер ошибки и выводит сообщение)
+
         switch(comand) {
             case PUSH:
-                if ((error = SwagPush(&(SwagAdr), refSpu -> ByteCodeBuf[++(refSpu ->pc)])) != NO_ERRS) {
+                if ((error = SwagPush(&(SwagAdr), refSpu -> ByteCodeBuf[refSpu ->pc++])) != NO_ERRS) {
                     SwagDump(&(SwagAdr), error);
                     return PUSH_ERR;
                 }
@@ -95,7 +102,7 @@ ProcErr_t Proccesing(spu_t* refSpu) {
 
             case DIV:
                 REPLACEMENT(Div);
-            //REVIEW - same, its clearlier isnt it?
+
             case DUMP:
                 if (REPLACE(Verify)) {
                     SwagDump(&(SwagAdr), error);
@@ -110,13 +117,13 @@ ProcErr_t Proccesing(spu_t* refSpu) {
                 return WITHOUT_ERRS;
 
             case PUSHR:
-                if ((Proc_err = RegPush(refSpu, refSpu -> ByteCodeBuf[++(refSpu -> pc)])) != WITHOUT_ERRS) {
+                if ((Proc_err = RegPush(refSpu, refSpu -> ByteCodeBuf[(refSpu -> pc)++])) != WITHOUT_ERRS) {
                     return Proc_err;
                 }
                 break;
 
             case POPR:
-                if ((Proc_err = RegPop(refSpu, refSpu -> ByteCodeBuf[++(refSpu -> pc)])) != WITHOUT_ERRS) {
+                if ((Proc_err = RegPop(refSpu, refSpu -> ByteCodeBuf[(refSpu -> pc)++])) != WITHOUT_ERRS) {
                     return Proc_err;
                 }
                 break;
@@ -136,7 +143,7 @@ ProcErr_t Proccesing(spu_t* refSpu) {
             case JNE:   JMP_TEMP_CASE(Jne);
 
             case CALL:
-                if (CallFunction(refSpu, refSpu -> ByteCodeBuf[++(refSpu ->pc)]) != WITHOUT_ERRS) return kCallError;
+                if (CallFunction(refSpu, refSpu -> ByteCodeBuf[(refSpu ->pc)++]) != WITHOUT_ERRS) return kCallError;
                 break;
 
             case RET:
@@ -144,11 +151,11 @@ ProcErr_t Proccesing(spu_t* refSpu) {
                 break;
 
             case PUSHM:
-                if (PushMemory(refSpu, refSpu -> ByteCodeBuf[++(refSpu ->pc)]) != WITHOUT_ERRS) return kPushMemoryError;
+                if (PushMemory(refSpu, refSpu -> ByteCodeBuf[(refSpu ->pc)++]) != WITHOUT_ERRS) return kPushMemoryError;
                 break;
 
             case POPM:
-                if (PopMemory(refSpu, refSpu -> ByteCodeBuf[++(refSpu ->pc)]) != WITHOUT_ERRS) return kPopMemoryError;
+                if (PopMemory(refSpu, refSpu -> ByteCodeBuf[(refSpu ->pc)++]) != WITHOUT_ERRS) return kPopMemoryError;
                 break;
 
             case DRAW:
@@ -166,50 +173,50 @@ ProcErr_t Proccesing(spu_t* refSpu) {
 }
 
 //=================================================================================================================================================
-
-fileFunErr_t BCFileToArr(fileInfo* refBCFile, swagElem_t** refArr) {
-    assert(refArr != NULL);
-
-    size_t size_of_memory = 0;
-    if (MemoryCalculator(refBCFile, &size_of_memory) != WITHOUT_ERRS) return NULL_PTR_PLUM;
-    //DEBUG fprintf(stderr, "Size of memory : %zu\n", size_of_memory);
-    *refArr = (swagElem_t*)calloc((size_t)(size_of_memory + 1), sizeof(**refArr));
-    if (*refArr == NULL) {
-        fprintf(stderr, "Calloc error for BC_buffer\n");
-        return NULL_PTR_PLUM;
-    }
-
-    (*refArr)[0] = size_of_memory;
-
-    size_t arrIndex = 0;
-    size_t strings_amount = refBCFile->str_count - 1;
-    for(size_t j = 0; j < strings_amount && arrIndex < size_of_memory + 1; j++) {
-
-        const char* workline = refBCFile -> pointerBuffer[j];
-        if (!workline) {
-            fprintf(stderr, "Null line pointer at %zu\n", j+1);
-            break;
-        }
-
-        swagElem_t arg = 0;
-        swagElem_t comand = 0;
-        int scanned = 0;
-
-        if ((scanned = sscanf(workline, "%zd %zd", &comand, &arg)) <= 0) {
-            fprintf(stderr, "Error scanf BYTECODE file\nString No %zu\n", j + 1);
-            break;
-        } else if (scanned == 1) {
-            (*refArr)[++arrIndex] = comand;
-        } else if (scanned == 2) {
-            (*refArr)[++arrIndex] = comand;
-            (*refArr)[++arrIndex] = arg;
-        } else {
-            fprintf(stderr, "Wrong line No%zu\n", j+1);
-            break;
-        }
-    }
-    return NO_PLUM_ERR;
-}
+//DRAFT -
+// fileFunErr_t BCFileToArr(fileInfo* refBCFile, swagElem_t** refArr) {
+//     assert(refArr != NULL);
+//
+//     size_t size_of_memory = 0;
+//     if (MemoryCalculator(refBCFile, &size_of_memory) != WITHOUT_ERRS) return NULL_PTR_PLUM;
+//     //DEBUG fprintf(stderr, "Size of memory : %zu\n", size_of_memory);
+//     *refArr = (swagElem_t*)calloc((size_t)(size_of_memory + 1), sizeof(**refArr));
+//     if (*refArr == NULL) {
+//         fprintf(stderr, "Calloc error for BC_buffer\n");
+//         return NULL_PTR_PLUM;
+//     }
+//
+//     (*refArr)[0] = size_of_memory;
+//
+//     size_t arrIndex = 0;
+//     size_t strings_amount = refBCFile->str_count - 1;
+//     for(size_t j = 0; j < strings_amount && arrIndex < size_of_memory + 1; j++) {
+//
+//         const char* workline = refBCFile -> pointerBuffer[j];
+//         if (!workline) {
+//             fprintf(stderr, "Null line pointer at %zu\n", j+1);
+//             break;
+//         }
+//
+//         swagElem_t arg = 0;
+//         swagElem_t comand = 0;
+//         int scanned = 0;
+//
+//         if ((scanned = sscanf(workline, "%zd %zd", &comand, &arg)) <= 0) {
+//             fprintf(stderr, "Error scanf BYTECODE file\nString No %zu\n", j + 1);
+//             break;
+//         } else if (scanned == 1) {
+//             (*refArr)[++arrIndex] = comand;
+//         } else if (scanned == 2) {
+//             (*refArr)[++arrIndex] = comand;
+//             (*refArr)[++arrIndex] = arg;
+//         } else {
+//             fprintf(stderr, "Wrong line No%zu\n", j+1);
+//             break;
+//         }
+//     }
+//     return NO_PLUM_ERR;
+// }
 
 //=================================================================================================================================================
 
@@ -280,13 +287,13 @@ ProcErr_t SpuConstructor(spu_t* refSpu, fileInfo* binary_file) {
 
     ssize_t read_count = (ssize_t)fread(refSpu->ByteCodeBuf, sizeof(int), memory_size, binary);
     fclose(binary);
-    if (bytes_count % sizeof(int) != 0) return INCORECT_SIZE;
+    if (bytes_count % sizeof(int) != 0 || read_count != memory_size) return INCORECT_SIZE;
     refSpu->size_of_bytecode_buffer = memory_size;
 
     //DEBUG
-    for (int i = 0; i < memory_size; i++) {
-        fprintf(stderr, "%d element in buffer is - [%d]\n", i, refSpu->ByteCodeBuf[i]);
-    }
+    // for (int i = 0; i < memory_size; i++) {
+    //     fprintf(stderr, "%d element in buffer is - [%d]\n", i, refSpu->ByteCodeBuf[i]);
+    // }
 
     refSpu->ram = (swagElem_t*) calloc(kSizeOfRam, sizeof(swagElem_t));
     return WITHOUT_ERRS;
@@ -327,7 +334,7 @@ ProcErr_t RegPop (spu_t* refSpu, size_t i) {
 ProcErr_t Jmp(spu_t* refSpu, size_t index) {
     assert(refSpu != NULL);
 
-    if (index < 1 || index >= refSpu->ByteCodeBuf[0]) {
+    if (index < 1 || index >= refSpu->size_of_bytecode_buffer) {
         return INCORECT_SIZE;
     }
     refSpu ->pc = index;
@@ -408,6 +415,9 @@ void ErrorHandler(int error_code) {
 
         case kCallError:
             CASE_TEMPLATE_ERROR_HANDLER(Call)
+
+        case kErrorSize:
+            CASE_TEMPLATE_ERROR_HANDLER(ErrorSize_in_)
 
         default:
             fprintf(stderr, "ErrorHandler mistake");
